@@ -15,9 +15,12 @@ func (bp buscaPessoas) handler(c echo.Context) error {
 	if termo == "" {
 		return echo.ErrBadRequest
 	}
-	pessoas, err := bp.db.Search(termo)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	p, err := bp.db.Search(termo)
+	switch err {
+	case nil:
+		return c.JSON(http.StatusOK, p)
+	case ErrNotFound:
+		return echo.NewHTTPError(http.StatusNotFound, "")
 	}
-	return c.JSON(http.StatusOK, pessoas)
+	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 }

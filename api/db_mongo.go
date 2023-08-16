@@ -62,12 +62,16 @@ func (db *MongoDB) Create(p *Pessoa) error {
 }
 
 func (db *MongoDB) Get(id string) (*Pessoa, error) {
-	var p Pessoa
-	err := db.collection.FindOne(context.Background(), bson.D{{Key: "id", Value: id}}).Decode(&p)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pessoa: %w", err)
+	p := new(Pessoa)
+	err := db.collection.FindOne(context.Background(), bson.D{{Key: "id", Value: id}}).Decode(p)
+	switch err {
+	case nil:
+		return p, nil
+	case mongo.ErrNoDocuments:
+		return nil, ErrNotFound
+	default:
+		return nil, fmt.Errorf("error decoding get result for term (%s): %w", id, err)
 	}
-	return &p, nil
 }
 
 func (db *MongoDB) Search(term string) ([]*Pessoa, error) {
@@ -76,9 +80,14 @@ func (db *MongoDB) Search(term string) ([]*Pessoa, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error searching for term (%s): %w", term, err)
 	}
-	results := make([]*Pessoa, 0) // quando não encontrar matches deve retornar slice vazio.
-	if err = cursor.All(context.TODO(), &results); err != nil {
+	defer cursor.Close(context.TODO())
+
+	var results []*Pessoa
+	if err := cursor.All(context.TODO(), &results); err != nil {
 		return nil, fmt.Errorf("error decoding desarch results for term (%s): %w", term, err)
+	}
+	if len(results) == 0 {
+		return nil, ErrNotFound
 	}
 	return results, nil
 }
