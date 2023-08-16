@@ -16,6 +16,8 @@ func main() {
 	e := echo.New()
 	e.JSONSerializer = newSerializer() // using a faster JSON serializer.
 
+	e.Logger.SetLevel(1) // 1: INFO, 0: DEBUG
+
 	db := NewInMemDB()
 	e.POST("/pessoas", criarPessoa{db}.handler)
 	e.GET("/pessoas/:id", getPessoa{db}.handler)

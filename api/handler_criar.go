@@ -28,6 +28,7 @@ func (cp criarPessoa) handler(c echo.Context) error {
 	if err := cp.db.Create(p); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	c.Logger().Infof("pessoa criada: %s", p.ID)
 	return c.JSON(http.StatusCreated, p)
 }
 

@@ -3,11 +3,11 @@ RUN apk add git
 WORKDIR /build
 
 # Cache dependencies.
-COPY ./go.* ./
+COPY ./api/go.* .
 RUN go mod download
 
 # Build the binary.
-COPY . .
+COPY ./api/* .
 RUN go build -o api .
 
 FROM alpine
