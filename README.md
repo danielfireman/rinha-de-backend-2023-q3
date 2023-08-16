@@ -4,7 +4,7 @@ Repo para participar do evento Rinha de Backend 2023 Q3
 ### Subir o servidor
 
 ```sh
-go run *.g
+go run *.go
 ```
 
 ### Queries
