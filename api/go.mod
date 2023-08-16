@@ -3,6 +3,7 @@ module rinha-be-fireman
 go 1.19
 
 require (
+	github.com/alitto/pond v1.8.3
 	github.com/bytedance/sonic v1.10.0
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/rogpeppe/fastuuid v1.2.0
