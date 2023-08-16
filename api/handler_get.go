@@ -11,12 +11,16 @@ type getPessoa struct {
 }
 
 func (gp getPessoa) handler(c echo.Context) error {
-	p, err := gp.db.Get(c.Param("id"))
+	id := c.Param("id")
+	if id == "" {
+		return echo.ErrBadRequest
+	}
+	p, err := gp.db.Get(id)
 	switch err {
 	case nil:
 		return c.JSON(http.StatusOK, p)
 	case ErrNotFound:
-		return echo.NewHTTPError(http.StatusNotFound, "")
+		return echo.ErrNotFound
 	}
 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 }

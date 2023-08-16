@@ -33,6 +33,7 @@ func MustNewMongoDB() *MongoDB {
 	}
 
 	collection := client.Database(dbName).Collection(collectionName)
+	collection.Drop(context.TODO()) // removing all previously stored documents.
 	defLanguage := "portuguese"
 	indexes := []mongo.IndexModel{
 		{
@@ -85,9 +86,6 @@ func (db *MongoDB) Search(term string) ([]*Pessoa, error) {
 	var results []*Pessoa
 	if err := cursor.All(context.TODO(), &results); err != nil {
 		return nil, fmt.Errorf("error decoding desarch results for term (%s): %w", term, err)
-	}
-	if len(results) == 0 {
-		return nil, ErrNotFound
 	}
 	return results, nil
 }

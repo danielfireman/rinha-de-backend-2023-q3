@@ -20,7 +20,7 @@ func (bp buscaPessoas) handler(c echo.Context) error {
 	case nil:
 		return c.JSON(http.StatusOK, p)
 	case ErrNotFound:
-		return echo.NewHTTPError(http.StatusNotFound, "")
+		return echo.ErrNotFound
 	}
 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 }
