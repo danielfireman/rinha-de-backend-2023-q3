@@ -14,7 +14,6 @@ func (gp getPessoa) handler(c echo.Context) error {
 	p, err := gp.db.Get(c.Param("id"))
 	switch err {
 	case nil:
-		c.Logger().Infof("pessoa encontrada: %s", p.ID)
 		return c.JSON(http.StatusOK, p)
 	case ErrNotFound:
 		return echo.NewHTTPError(http.StatusNotFound, "")
