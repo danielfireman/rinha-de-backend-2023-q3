@@ -21,5 +21,5 @@ func main() {
 	e.GET("/pessoas/:id", getPessoa{db}.handler)
 	e.GET("/contagem-pessoas", contarPessoas{db}.handler)
 	e.GET("/pessoas", buscaPessoas{db}.handler)
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":8080"))
 }
