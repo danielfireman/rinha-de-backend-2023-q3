@@ -15,7 +15,7 @@ type Pessoa struct {
 func main() {
 	e := echo.New()
 	e.JSONSerializer = newSerializer() // using a faster JSON serializer.
-	db := NewInMemDB()
+	db := MustNewMongoDB()
 	e.POST("/pessoas", criarPessoa{db}.handler)
 	e.GET("/pessoas/:id", getPessoa{db}.handler)
 	e.GET("/contagem-pessoas", contarPessoas{db}.handler)
