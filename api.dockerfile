@@ -3,7 +3,7 @@ RUN apk add git
 WORKDIR /build
 
 # Cache dependencies.
-COPY ./api/go.* .
+COPY ./go.* .
 RUN go mod download
 
 # Build the binary.
