@@ -1,0 +1,54 @@
+syntax = "proto3";
+option go_package = "./proto";
+
+service Cache {
+    rpc Put (PutRequest) returns (PutResponse) {}
+    rpc Get (GetRequest) returns (GetResponse) {}
+    rpc Search(SearchRequest) returns (SearchResponse) {}
+  }
+  
+  message PutRequest {
+    Pessoa pessoa = 1;
+  }
+  
+  message PutResponse {
+    Pessoa pessoa = 1;
+    Status status = 2;
+    string msg = 3;
+  }
+
+  message GetRequest {
+    string id = 1;
+  }
+
+  message GetResponse {
+    Pessoa pessoa = 1;
+    Status status = 2;
+    string msg = 3;
+  }
+
+  message SearchRequest {
+    string term = 1;
+  } 
+ 
+  message SearchResponse {
+    repeated Pessoa pessoas = 1;
+    Status status = 2;
+    string msg = 3;
+  }
+
+  enum Status {
+    OK = 0;
+    ERROR = 1;
+    NOT_FOUND = 2;
+    DUPLICATE_KEY = 3;
+  }
+
+  message Pessoa {
+    string id = 1;
+    string nome = 2;
+    string apelido = 3;
+    string nascimento = 4;
+    repeated string stack = 5;
+  }
+

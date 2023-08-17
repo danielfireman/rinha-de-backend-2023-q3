@@ -7,7 +7,7 @@ import (
 )
 
 type getPessoa struct {
-	db DB
+	cache *Cache
 }
 
 func (gp getPessoa) handler(c echo.Context) error {
@@ -15,12 +15,14 @@ func (gp getPessoa) handler(c echo.Context) error {
 	if id == "" {
 		return echo.ErrBadRequest
 	}
-	p, err := gp.db.Get(id)
+
+	p, err := gp.cache.Get(id)
 	switch err {
 	case nil:
 		return c.JSON(http.StatusOK, p)
 	case ErrNotFound:
 		return echo.ErrNotFound
 	}
+
 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 }

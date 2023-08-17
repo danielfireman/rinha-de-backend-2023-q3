@@ -13,7 +13,8 @@ var (
 )
 
 type criarPessoa struct {
-	db DB
+	db    DB
+	cache *Cache
 }
 
 func (cp criarPessoa) handler(c echo.Context) error {
@@ -25,11 +26,18 @@ func (cp criarPessoa) handler(c echo.Context) error {
 		return echo.ErrUnprocessableEntity
 	}
 	p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
-	if err := cp.db.Create(p); err != nil {
+
+	// atualizando o cache.
+	if err := cp.cache.Create(p); err != nil {
 		if err == ErrDuplicateKey {
 			return echo.ErrUnprocessableEntity
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error creating person: %w", err))
 	}
+
+	// atualizando o DB assincronamente.
+	go func() {
+		cp.db.Create(p)
+	}()
 	return c.JSON(http.StatusCreated, p)
 }

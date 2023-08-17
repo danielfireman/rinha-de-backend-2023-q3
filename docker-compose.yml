@@ -7,13 +7,14 @@ services:
     hostname: api1
     depends_on:
       - db
+      - cache
     expose:
       - "80"
     deploy:
       resources:
         limits:
           cpus: '0.25'
-          memory: '0.5GB'
+          memory: '0.25GB'
 
   api2:
     # API - Instância 01
@@ -21,8 +22,21 @@ services:
       dockerfile: "./api.dockerfile"
     depends_on:
       - db
+      - cache
     expose:
       - "80"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '0.25GB'
+
+  cache:
+    # API - Instância 01
+    build:
+      dockerfile: "./cache.dockerfile"
+    ports:
+      - "1313:1313"
     deploy:
       resources:
         limits:
@@ -57,7 +71,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.75'
+          cpus: '0.5'
           memory: '1GB'
 
 networks:

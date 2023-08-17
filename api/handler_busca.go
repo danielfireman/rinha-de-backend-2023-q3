@@ -7,7 +7,7 @@ import (
 )
 
 type buscaPessoas struct {
-	db DB
+	cache *Cache
 }
 
 func (bp buscaPessoas) handler(c echo.Context) error {
@@ -15,7 +15,7 @@ func (bp buscaPessoas) handler(c echo.Context) error {
 	if termo == "" {
 		return echo.ErrBadRequest
 	}
-	p, err := bp.db.Search(termo)
+	p, err := bp.cache.Search(termo)
 	switch err {
 	case nil:
 		return c.JSON(http.StatusOK, p)
