@@ -77,7 +77,8 @@ func (db *MongoDB) Get(id string) (*Pessoa, error) {
 
 func (db *MongoDB) Search(term string) ([]*Pessoa, error) {
 	filter := bson.D{{Key: "$text", Value: bson.D{{Key: "$search", Value: term}}}}
-	cursor, err := db.collection.Find(context.TODO(), filter)
+	opts := options.Find().SetLimit(50)
+	cursor, err := db.collection.Find(context.TODO(), filter, opts)
 	if err != nil {
 		return nil, fmt.Errorf("error searching for term (%s): %w", term, err)
 	}
