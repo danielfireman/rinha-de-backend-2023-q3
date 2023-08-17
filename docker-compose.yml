@@ -47,11 +47,8 @@ services:
 
   db:
     # Banco de dados
-    #  image: postgres
     image: mongo:latest
-
-    # desabilita o log do mongo (importante para desempenho)
-    command: mongod --quiet --logpath /dev/null
+    command: mongod --quiet --logpath /dev/null # desabilita o log do mongo (importante para desempenho)
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword

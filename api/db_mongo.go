@@ -39,10 +39,13 @@ func MustNewMongoDB() *MongoDB {
 	indexes := []mongo.IndexModel{
 		{
 			Keys: bson.D{{Key: "id", Value: 1}},
+		}, {
+			Keys: bson.D{{Key: "apelido", Value: 1}},
 			Options: &options.IndexOptions{
 				Unique: &defUnique,
 			},
-		}, {
+		},
+		{
 			Keys: bson.D{{Key: "nome", Value: "text"}, {Key: "apelido", Value: "text"}, {Key: "stack", Value: "text"}},
 			Options: &options.IndexOptions{
 				DefaultLanguage: &defLanguage,
@@ -60,6 +63,9 @@ func MustNewMongoDB() *MongoDB {
 func (db *MongoDB) Create(p *Pessoa) error {
 	_, err := db.collection.InsertOne(context.Background(), p)
 	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return ErrDuplicateKey
+		}
 		return fmt.Errorf("error inserting pessoa: %w", err)
 	}
 	return err

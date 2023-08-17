@@ -6,7 +6,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/rogpeppe/fastuuid"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var (
@@ -27,7 +26,7 @@ func (cp criarPessoa) handler(c echo.Context) error {
 	}
 	p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
 	if err := cp.db.Create(p); err != nil {
-		if mongo.IsDuplicateKeyError(err) {
+		if err == ErrDuplicateKey {
 			return echo.ErrUnprocessableEntity
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error creating person: %w", err))

@@ -5,7 +5,8 @@ import (
 )
 
 var (
-	ErrNotFound = fmt.Errorf("not found")
+	ErrNotFound     = fmt.Errorf("not found")
+	ErrDuplicateKey = fmt.Errorf("duplicate key")
 )
 
 type DB interface {
