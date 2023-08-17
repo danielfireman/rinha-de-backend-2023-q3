@@ -14,7 +14,7 @@ const dateLayout = "2006-01-02"
 
 var (
 	uuidGen = fastuuid.MustNewGenerator()
-	pool    = pond.New(10, 1000)
+	pool    = pond.New(5, 50)
 )
 
 type criarPessoa struct {
@@ -29,8 +29,8 @@ func (cp criarPessoa) handler(c echo.Context) error {
 	if err := cp.validate(p); err != nil {
 		return err
 	}
-	p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
 	pool.Submit(func() {
+		p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
 		if err := cp.db.Create(p); err != nil {
 			panic(fmt.Errorf("error creating person: %w", err))
 		}
