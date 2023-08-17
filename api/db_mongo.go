@@ -35,10 +35,13 @@ func MustNewMongoDB() *MongoDB {
 	collection := client.Database(dbName).Collection(collectionName)
 	collection.Drop(context.TODO()) // removing all previously stored documents.
 	defLanguage := "portuguese"
+	defUnique := true
 	indexes := []mongo.IndexModel{
 		{
-			Keys:    bson.D{{Key: "id", Value: 1}},
-			Options: &options.IndexOptions{},
+			Keys: bson.D{{Key: "id", Value: 1}},
+			Options: &options.IndexOptions{
+				Unique: &defUnique,
+			},
 		}, {
 			Keys: bson.D{{Key: "nome", Value: "text"}, {Key: "apelido", Value: "text"}, {Key: "stack", Value: "text"}},
 			Options: &options.IndexOptions{
