@@ -43,7 +43,7 @@ services:
       resources:
         limits:
           cpus: '0.25'
-          memory: '0.5GB'
+          memory: '1GB'
 
   db:
     # Banco de dados
@@ -61,4 +61,4 @@ services:
       resources:
         limits:
           cpus: '0.75'
-          memory: '1.5GB'
+          memory: '1GB'
