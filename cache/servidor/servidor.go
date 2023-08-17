@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"strings"
+	"sync"
 
 	pb "github.com/danielfireman/rinha-de-backend-2023-q3/cache/proto"
 )
 
 type server struct {
 	pb.UnimplementedCacheServer
+	sync.Mutex
 
 	apelidoMap map[string]struct{}     // mapa comum, usado para detectar apelidos duplicados.
 	idMap      map[string]*pb.Pessoa   // mapa comum, usado para o Get.
@@ -24,8 +26,10 @@ func newServer() *server {
 }
 
 func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
+	s.Lock()
 	_, ok := s.apelidoMap[in.Pessoa.Apelido]
 	if ok {
+		s.Unlock()
 		return &pb.PutResponse{
 			Status: pb.Status_DUPLICATE_KEY,
 		}, nil
@@ -35,6 +39,7 @@ func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, e
 	pessoa := in.Pessoa
 	s.apelidoMap[in.Pessoa.Apelido] = struct{}{}
 	s.idMap[pessoa.Id] = pessoa
+	s.Unlock()
 
 	// preenchendo índice invertido.
 	// coletando lista de termos.
@@ -43,10 +48,13 @@ func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, e
 	for _, s := range pessoa.Stack {
 		termos = append(termos, strings.ToLower(s))
 	}
+
 	// associando termos a pessoa.
+	s.Lock()
 	for _, t := range termos {
 		s.indice[t] = append(s.indice[t], pessoa)
 	}
+	s.Unlock()
 	return &pb.PutResponse{
 		Status: pb.Status_OK,
 		Pessoa: pessoa,
@@ -54,6 +62,8 @@ func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, e
 }
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+	s.Lock()
+	defer s.Unlock()
 	p, ok := s.idMap[in.Id]
 	if !ok {
 		return &pb.GetResponse{
@@ -68,11 +78,17 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 }
 
 func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
+	s.Lock()
+	defer s.Unlock()
 	p, ok := s.indice[strings.ToLower(in.Term)]
 	if !ok {
 		return &pb.SearchResponse{
-			Status: pb.Status_NOT_FOUND,
+			Pessoas: []*pb.Pessoa{},
+			Status:  pb.Status_OK,
 		}, nil
+	}
+	if len(p) > 50 {
+		p = p[:50]
 	}
 	return &pb.SearchResponse{
 		Pessoas: p,

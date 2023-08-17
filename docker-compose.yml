@@ -13,7 +13,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.15'
           memory: '0.25GB'
 
   api2:
@@ -28,7 +28,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.15'
           memory: '0.25GB'
 
   cache:
@@ -40,7 +40,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.5'
           memory: '0.5GB'
 
   nginx:
@@ -56,7 +56,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.5'
           memory: '1GB'
 
   db:
@@ -71,7 +71,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '0.2'
           memory: '1GB'
 
 networks:
