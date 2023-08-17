@@ -14,7 +14,7 @@ func main() {
 		log.Fatalf("falha ao ouvir porta 1313: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterCacheServer(s, &server{})
+	pb.RegisterCacheServer(s, newServer())
 	log.Printf("servidor ouvindo %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("falha ao servir: %v", err)

@@ -7,13 +7,13 @@ COPY ./go.* .
 RUN go mod download
 
 # Build the binary.
-COPY ./cache/* .
-RUN go build -o cache .
+COPY . .
+RUN cd cache/servidor && go build -o servidor . && mv servidor ../../
 
 FROM alpine
 RUN apk add --no-cache tzdata
-COPY --from=builder /build/cache /
+COPY --from=builder /build/servidor /
 EXPOSE 1313
 
 # Inicia o servidor de cache
-CMD ["/cache"]
+CMD ["/servidor"]

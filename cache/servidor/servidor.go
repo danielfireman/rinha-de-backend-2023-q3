@@ -15,6 +15,14 @@ type server struct {
 	indice     map[string][]*pb.Pessoa // indice invertido, usado para o Search.
 }
 
+func newServer() *server {
+	return &server{
+		apelidoMap: make(map[string]struct{}),
+		idMap:      make(map[string]*pb.Pessoa),
+		indice:     make(map[string][]*pb.Pessoa),
+	}
+}
+
 func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	_, ok := s.apelidoMap[in.Pessoa.Apelido]
 	if ok {

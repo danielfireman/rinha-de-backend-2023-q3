@@ -7,13 +7,13 @@ COPY ./go.* .
 RUN go mod download
 
 # Build the binary.
-COPY ./api/* .
-RUN go build -o api .
+COPY . .
+RUN cd api && go build -o servidor . && mv servidor ../
 
 FROM alpine
 RUN apk add --no-cache tzdata
-COPY --from=builder /build/api /
+COPY --from=builder /build/servidor /
 EXPOSE 8080
 
 # Inicia a API
-CMD ["/api"]
+CMD ["/servidor"]
