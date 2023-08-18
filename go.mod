@@ -7,6 +7,7 @@ require (
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/rogpeppe/fastuuid v1.2.0
 	go.mongodb.org/mongo-driver v1.12.1
+	golang.org/x/sync v0.3.0
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
@@ -33,7 +34,6 @@ require (
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect

@@ -15,5 +15,10 @@ RUN apk add --no-cache tzdata
 COPY --from=builder /build/servidor /
 EXPOSE 1313
 
+# [PerfNote] Se aumentar o GOMAXPROCs deve ajustar o comportamento do rinhadb
+# para acesso concorrente aos mapas.
+ENV GOMAXPROCS=1 \
+    GOGC=300
+
 # Inicia o servidor de cache
 CMD ["/servidor"]

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -13,26 +14,31 @@ var (
 )
 
 type criarPessoa struct {
-	db              DB
-	rinhadb         *RinhaDB
-	chanMongoUpdate chan *Pessoa
+	db      DB
+	rinhadb *RinhaDB
+
+	// canal para enviar chamadas remotas para criação de pessoa de forma assíncrona.
+	chanCriacao chan *Pessoa
 }
 
-func newCriarPessoa(db DB, rinhaDB *RinhaDB) *criarPessoa {
+func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB) *criarPessoa {
 	c := make(chan *Pessoa)
 	// inicializa worker que atualiza o mongodb de forma assíncrona.
 	go func() {
 		for {
 			p := <-c
-			if err := db.Create(p); err != nil {
-				panic(err)
+			if err := rinhaDB.Create(p); err != nil {
+				log.Printf("error creating person %s at rinhadb: %w", p.ID, err)
+			}
+			if err := mongoDB.Create(p); err != nil {
+				log.Printf("error creating person %s at mongodb: %w", p.ID, err)
 			}
 		}
 	}()
 	return &criarPessoa{
-		db:              db,
-		rinhadb:         rinhaDB,
-		chanMongoUpdate: c,
+		db:          mongoDB,
+		rinhadb:     rinhaDB,
+		chanCriacao: c,
 	}
 }
 
@@ -51,21 +57,23 @@ func (cp criarPessoa) handler(c echo.Context) error {
 	if p.Nascimento == nil {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nascimento não preenchido"))
 	}
+
+	// checando duplicidade de apelido.
+	if isDup, err := cp.rinhadb.ChecaDuplicata(*p.Apelido); err == nil {
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error checking duplicate: %w", err))
+		}
+		if isDup {
+			return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado"))
+		}
+	}
 	// preenchimento do ID
 	p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
 
-	// atualizando o rinhadb de forma síncrona.
-	if err := cp.rinhadb.Create(p); err != nil {
-		if err == ErrDuplicateKey {
-			return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado"))
-		}
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error creating person: %w", err))
-	}
-
-	// envia evento para o worker que atualiza o mongo.
+	// envia evento para o worker que atualiza os bancos de dados.
 	// somente executar quando a requisição for válida.
 	go func() {
-		cp.chanMongoUpdate <- p
+		cp.chanCriacao <- p
 	}()
 	return c.JSON(http.StatusCreated, p)
 }

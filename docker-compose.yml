@@ -12,7 +12,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.15'
+          cpus: '0.25'
           memory: '0.25GB'
 
   api2:
@@ -26,7 +26,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.15'
+          cpus: '0.25'
           memory: '0.25GB'
 
   rinhadb:
@@ -34,15 +34,10 @@ services:
       dockerfile: "./rinhadb.dockerfile"
     ports:
       - "1313:1313"
-    # [PerfNote] Se aumentar o GOMAXPROCs deve ajustar o comportamento do rinhadb
-    # para acesso concorrente aos mapas.
-    environment:
-      - GOMAXPROCS=1
-      - GOGC=300
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '0.6'
           memory: '0.5GB'
 
   nginx:
@@ -58,8 +53,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: '1GB'
+          cpus: '0.2'
+          memory: '5GB'
 
   mongodb:
     # Banco de dados

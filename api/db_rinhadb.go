@@ -10,6 +10,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// NOTA IMPORTANTE: [known issue] Tem um problema é que pode acontecer quando ocorrem dois creates iguais consecutivos. Ambos passam pelo checa duplicatas, porém, quando o segundo chega na criação (que é assíncrona)
+// dá pau na chamada.
+
 type RinhaDB struct {
 	client pb.CacheClient
 }
@@ -95,4 +98,14 @@ func (c *RinhaDB) Search(term string) ([]*Pessoa, error) {
 		})
 	}
 	return pessoas, nil
+}
+
+func (c *RinhaDB) ChecaDuplicata(apelido string) (bool, error) {
+	resp, err := c.client.CheckDuplicate(context.TODO(), &pb.CheckDuplicateRequest{
+		Apelido: apelido,
+	})
+	if err != nil {
+		return false, fmt.Errorf("error rinhadb search: %w", err)
+	}
+	return resp.IsDuplicate, nil
 }

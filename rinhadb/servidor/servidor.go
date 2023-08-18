@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	pb "github.com/danielfireman/rinha-de-backend-2023-q3/rinhadb/proto"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -19,6 +20,11 @@ type server struct {
 	apelidoMap map[string]struct{}     // mapa comum, usado para detectar apelidos duplicados.
 	idMap      map[string]*pb.Pessoa   // mapa comum, usado para o Get.
 	indice     map[string][]*pb.Pessoa // indice invertido, usado para o Search.
+
+	// [PerfNote] Como temos apenas uma thread, não queremos que as diversas goroutines (uma por
+	// requisição) fiquem disputando a CPU. Por isso, usamos um semáforo para garantir que apenas uma
+	// esteja acordada num determinado momento.
+	sem *semaphore.Weighted
 }
 
 func newServer() *server {
@@ -26,10 +32,14 @@ func newServer() *server {
 		apelidoMap: make(map[string]struct{}),
 		idMap:      make(map[string]*pb.Pessoa),
 		indice:     make(map[string][]*pb.Pessoa),
+		sem:        semaphore.NewWeighted(1),
 	}
 }
 
 func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
+	s.sem.Acquire(ctx, 1)
+	defer s.sem.Release(1)
+
 	_, ok := s.apelidoMap[in.Pessoa.Apelido]
 	if ok {
 		return &pb.PutResponse{
@@ -61,6 +71,9 @@ func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, e
 }
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
+	s.sem.Acquire(ctx, 1)
+	defer s.sem.Release(1)
+
 	p, ok := s.idMap[in.Id]
 	if !ok { // quando o get não tiver resultados, deve retornar not found.
 		return &pb.GetResponse{
@@ -71,10 +84,12 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 		Pessoa: p,
 		Status: pb.Status_OK,
 	}, nil
-
 }
 
 func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
+	s.sem.Acquire(ctx, 1)
+	defer s.sem.Release(1)
+
 	p, ok := s.indice[strings.ToLower(in.Term)]
 	if !ok { // quando a busca não tiver resultados, deve retornar 200.
 		return &pb.SearchResponse{
@@ -88,5 +103,15 @@ func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchRe
 	return &pb.SearchResponse{
 		Pessoas: p,
 		Status:  pb.Status_OK,
+	}, nil
+}
+
+func (s *server) CheckDuplicate(ctx context.Context, in *pb.CheckDuplicateRequest) (*pb.CheckDuplicateResponse, error) {
+	s.sem.Acquire(ctx, 1)
+	defer s.sem.Release(1)
+
+	_, ok := s.apelidoMap[in.Apelido]
+	return &pb.CheckDuplicateResponse{
+		IsDuplicate: ok,
 	}, nil
 }
