@@ -7,7 +7,6 @@ require (
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/rogpeppe/fastuuid v1.2.0
 	go.mongodb.org/mongo-driver v1.12.1
-	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
 )
