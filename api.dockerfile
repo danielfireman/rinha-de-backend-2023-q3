@@ -15,5 +15,9 @@ RUN apk add --no-cache tzdata
 COPY --from=builder /build/servidor /
 EXPOSE 8080
 
+ENV GOMAXPROCS=1 \
+    GOGC=300 \
+    MONGODB_URI="mongodb://root:rootpassword@host.docker.internal:27017"
+
 # Inicia a API
 CMD ["/servidor"]

@@ -7,7 +7,7 @@ import (
 )
 
 type getPessoa struct {
-	cache *Cache
+	cache *RinhaDB
 }
 
 func (gp getPessoa) handler(c echo.Context) error {

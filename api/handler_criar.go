@@ -13,31 +13,59 @@ var (
 )
 
 type criarPessoa struct {
-	db    DB
-	cache *Cache
+	db              DB
+	rinhadb         *RinhaDB
+	chanMongoUpdate chan *Pessoa
+}
+
+func newCriarPessoa(db DB, rinhaDB *RinhaDB) *criarPessoa {
+	c := make(chan *Pessoa)
+	// inicializa worker que atualiza o mongodb de forma assíncrona.
+	go func() {
+		for {
+			p := <-c
+			if err := db.Create(p); err != nil {
+				panic(err)
+			}
+		}
+	}()
+	return &criarPessoa{
+		db:              db,
+		rinhadb:         rinhaDB,
+		chanMongoUpdate: c,
+	}
 }
 
 func (cp criarPessoa) handler(c echo.Context) error {
 	p := new(Pessoa)
 	if err := c.Bind(p); err != nil {
-		return echo.ErrBadRequest
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("error binding pessoa: %w", err))
 	}
-	if p.Nascimento == nil || p.Apelido == nil || p.Nome == nil {
-		return echo.ErrUnprocessableEntity
+	// validação
+	if p.Nome == nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nome não preenchido"))
 	}
+	if p.Apelido == nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo apelido não preenchido"))
+	}
+	if p.Nascimento == nil {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nascimento não preenchido"))
+	}
+	// preenchimento do ID
 	p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
 
-	// atualizando o cache.
-	if err := cp.cache.Create(p); err != nil {
+	// atualizando o rinhadb de forma síncrona.
+	if err := cp.rinhadb.Create(p); err != nil {
 		if err == ErrDuplicateKey {
-			return echo.ErrUnprocessableEntity
+			return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado"))
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error creating person: %w", err))
 	}
 
-	// atualizando o DB assincronamente.
+	// envia evento para o worker que atualiza o mongo.
+	// somente executar quando a requisição for válida.
 	go func() {
-		cp.db.Create(p)
+		cp.chanMongoUpdate <- p
 	}()
 	return c.JSON(http.StatusCreated, p)
 }

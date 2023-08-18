@@ -4,7 +4,7 @@ import (
 	"log"
 	"net"
 
-	pb "github.com/danielfireman/rinha-de-backend-2023-q3/cache/proto"
+	pb "github.com/danielfireman/rinha-de-backend-2023-q3/rinhadb/proto"
 	"google.golang.org/grpc"
 )
 

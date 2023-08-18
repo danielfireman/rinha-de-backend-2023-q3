@@ -3,7 +3,7 @@ Repo para participar do evento Rinha de Backend 2023 Q3
 
 ### Subir ambiente
 ```sh
-docker-compose up --build
+docker-compose up --build --force-recreate
 ```
 
 #### Subir o servidor

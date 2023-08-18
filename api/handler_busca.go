@@ -7,7 +7,7 @@ import (
 )
 
 type buscaPessoas struct {
-	cache *Cache
+	rinhadb *RinhaDB
 }
 
 func (bp buscaPessoas) handler(c echo.Context) error {
@@ -15,12 +15,10 @@ func (bp buscaPessoas) handler(c echo.Context) error {
 	if termo == "" {
 		return echo.ErrBadRequest
 	}
-	p, err := bp.cache.Search(termo)
+	p, err := bp.rinhadb.Search(termo)
 	switch err {
 	case nil:
 		return c.JSON(http.StatusOK, p)
-	case ErrNotFound:
-		return echo.ErrNotFound
 	}
 	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 }

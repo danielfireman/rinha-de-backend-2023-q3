@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,7 +22,7 @@ type MongoDB struct {
 
 func MustNewMongoDB() *MongoDB {
 	// Conectando com o DB.
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://root:rootpassword@host.docker.internal:27017"))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 	if err != nil {
 		panic(fmt.Errorf("error connecting to db: %w", err))
 	}

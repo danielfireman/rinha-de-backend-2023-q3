@@ -8,7 +8,7 @@ RUN go mod download
 
 # Build the binary.
 COPY . .
-RUN cd cache/servidor && go build -o servidor . && mv servidor ../../
+RUN cd rinhadb/servidor && go build -o servidor . && mv servidor ../../
 
 FROM alpine
 RUN apk add --no-cache tzdata

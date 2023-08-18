@@ -1,13 +1,12 @@
 version: '3.5'
 services:
   api1:
-    # API - Instância 01
     build:
       dockerfile: "./api.dockerfile"
     hostname: api1
     depends_on:
-      - db
-      - cache
+      - mongodb
+      - rinhadb
     expose:
       - "80"
     deploy:
@@ -17,12 +16,11 @@ services:
           memory: '0.25GB'
 
   api2:
-    # API - Instância 01
     build:
       dockerfile: "./api.dockerfile"
     depends_on:
-      - db
-      - cache
+      - mongodb
+      - rinhadb
     expose:
       - "80"
     deploy:
@@ -31,12 +29,16 @@ services:
           cpus: '0.15'
           memory: '0.25GB'
 
-  cache:
-    # API - Instância 01
+  rinhadb:
     build:
-      dockerfile: "./cache.dockerfile"
+      dockerfile: "./rinhadb.dockerfile"
     ports:
       - "1313:1313"
+    # [PerfNote] Se aumentar o GOMAXPROCs deve ajustar o comportamento do rinhadb
+    # para acesso concorrente aos mapas.
+    environment:
+      - GOMAXPROCS=1
+      - GOGC=300
     deploy:
       resources:
         limits:
@@ -59,7 +61,7 @@ services:
           cpus: '0.5'
           memory: '1GB'
 
-  db:
+  mongodb:
     # Banco de dados
     image: mongo:latest
     command: mongod --quiet --logpath /dev/null # desabilita o log do mongo (importante para desempenho)
