@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dgraph-io/ristretto"
 	"github.com/labstack/echo/v4"
 )
 
 type criarPessoa struct {
 	db      DB
 	rinhadb *RinhaDB
+	cache   *ristretto.Cache
 
 	// canal para enviar chamadas remotas para criação de pessoa de forma assíncrona.
 	chanCriacao chan *Pessoa
 }
 
-func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB) *criarPessoa {
+func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB, cache *ristretto.Cache) *criarPessoa {
 	c := make(chan *Pessoa)
 	// inicializa worker que atualiza o mongodb de forma assíncrona.
 	go func() {
@@ -30,6 +32,7 @@ func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB) *criarPessoa {
 		db:          mongoDB,
 		rinhadb:     rinhaDB,
 		chanCriacao: c,
+		cache:       cache,
 	}
 }
 
@@ -49,6 +52,11 @@ func (cp criarPessoa) handler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nascimento não preenchido"))
 	}
 
+	// verifica se o apelido da pessoa existe no cache.
+	if _, ok := cp.cache.Get(*p.Apelido); ok {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado %s", *p.Apelido))
+	}
+
 	// cria pessoa no rinhadb.
 	if err := cp.rinhadb.Create(p); err != nil {
 		if err == ErrDuplicateKey {
@@ -56,6 +64,10 @@ func (cp criarPessoa) handler(c echo.Context) error {
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error criando pessoa: %w", err))
 	}
+
+	// adiciona pessoa no cache.
+	cp.cache.Set(p.ID, p, 1)
+	cp.cache.Set(*p.Apelido, p, 1)
 
 	// envia evento para o worker que atualiza os bancos de dados.
 	// somente executar quando a requisição for válida.
