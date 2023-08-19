@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	ErrNotFound     = fmt.Errorf("not found")
-	ErrDuplicateKey = fmt.Errorf("duplicate key")
+	ErrNotFound     = fmt.Errorf("pessoa não encontrada")
+	ErrDuplicateKey = fmt.Errorf("apelido duplicado")
 )
 
 type DB interface {

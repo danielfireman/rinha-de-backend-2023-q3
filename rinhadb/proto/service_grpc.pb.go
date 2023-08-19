@@ -25,7 +25,6 @@ type CacheClient interface {
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
 	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
-	CheckDuplicate(ctx context.Context, in *CheckDuplicateRequest, opts ...grpc.CallOption) (*CheckDuplicateResponse, error)
 }
 
 type cacheClient struct {
@@ -63,15 +62,6 @@ func (c *cacheClient) Search(ctx context.Context, in *SearchRequest, opts ...grp
 	return out, nil
 }
 
-func (c *cacheClient) CheckDuplicate(ctx context.Context, in *CheckDuplicateRequest, opts ...grpc.CallOption) (*CheckDuplicateResponse, error) {
-	out := new(CheckDuplicateResponse)
-	err := c.cc.Invoke(ctx, "/Cache/CheckDuplicate", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // CacheServer is the server API for Cache service.
 // All implementations must embed UnimplementedCacheServer
 // for forward compatibility
@@ -79,7 +69,6 @@ type CacheServer interface {
 	Put(context.Context, *PutRequest) (*PutResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
 	Search(context.Context, *SearchRequest) (*SearchResponse, error)
-	CheckDuplicate(context.Context, *CheckDuplicateRequest) (*CheckDuplicateResponse, error)
 	mustEmbedUnimplementedCacheServer()
 }
 
@@ -95,9 +84,6 @@ func (UnimplementedCacheServer) Get(context.Context, *GetRequest) (*GetResponse,
 }
 func (UnimplementedCacheServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
-}
-func (UnimplementedCacheServer) CheckDuplicate(context.Context, *CheckDuplicateRequest) (*CheckDuplicateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckDuplicate not implemented")
 }
 func (UnimplementedCacheServer) mustEmbedUnimplementedCacheServer() {}
 
@@ -166,24 +152,6 @@ func _Cache_Search_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cache_CheckDuplicate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckDuplicateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(CacheServer).CheckDuplicate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Cache/CheckDuplicate",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CacheServer).CheckDuplicate(ctx, req.(*CheckDuplicateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Cache_ServiceDesc is the grpc.ServiceDesc for Cache service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,10 +170,6 @@ var Cache_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _Cache_Search_Handler,
-		},
-		{
-			MethodName: "CheckDuplicate",
-			Handler:    _Cache_CheckDuplicate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -72,100 +72,6 @@ func (Status) EnumDescriptor() ([]byte, []int) {
 	return file_service_proto_rawDescGZIP(), []int{0}
 }
 
-type CheckDuplicateRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Apelido string `protobuf:"bytes,1,opt,name=apelido,proto3" json:"apelido,omitempty"`
-}
-
-func (x *CheckDuplicateRequest) Reset() {
-	*x = CheckDuplicateRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CheckDuplicateRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CheckDuplicateRequest) ProtoMessage() {}
-
-func (x *CheckDuplicateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CheckDuplicateRequest.ProtoReflect.Descriptor instead.
-func (*CheckDuplicateRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *CheckDuplicateRequest) GetApelido() string {
-	if x != nil {
-		return x.Apelido
-	}
-	return ""
-}
-
-type CheckDuplicateResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	IsDuplicate bool `protobuf:"varint,1,opt,name=is_duplicate,json=isDuplicate,proto3" json:"is_duplicate,omitempty"`
-}
-
-func (x *CheckDuplicateResponse) Reset() {
-	*x = CheckDuplicateResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CheckDuplicateResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CheckDuplicateResponse) ProtoMessage() {}
-
-func (x *CheckDuplicateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CheckDuplicateResponse.ProtoReflect.Descriptor instead.
-func (*CheckDuplicateResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *CheckDuplicateResponse) GetIsDuplicate() bool {
-	if x != nil {
-		return x.IsDuplicate
-	}
-	return false
-}
-
 type PutRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -177,7 +83,7 @@ type PutRequest struct {
 func (x *PutRequest) Reset() {
 	*x = PutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[2]
+		mi := &file_service_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -190,7 +96,7 @@ func (x *PutRequest) String() string {
 func (*PutRequest) ProtoMessage() {}
 
 func (x *PutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_service_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -203,7 +109,7 @@ func (x *PutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutRequest.ProtoReflect.Descriptor instead.
 func (*PutRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+	return file_service_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *PutRequest) GetPessoa() *Pessoa {
@@ -226,7 +132,7 @@ type PutResponse struct {
 func (x *PutResponse) Reset() {
 	*x = PutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[3]
+		mi := &file_service_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -239,7 +145,7 @@ func (x *PutResponse) String() string {
 func (*PutResponse) ProtoMessage() {}
 
 func (x *PutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,7 +158,7 @@ func (x *PutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutResponse.ProtoReflect.Descriptor instead.
 func (*PutResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *PutResponse) GetPessoa() *Pessoa {
@@ -287,7 +193,7 @@ type GetRequest struct {
 func (x *GetRequest) Reset() {
 	*x = GetRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[4]
+		mi := &file_service_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -300,7 +206,7 @@ func (x *GetRequest) String() string {
 func (*GetRequest) ProtoMessage() {}
 
 func (x *GetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -313,7 +219,7 @@ func (x *GetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRequest.ProtoReflect.Descriptor instead.
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetRequest) GetId() string {
@@ -336,7 +242,7 @@ type GetResponse struct {
 func (x *GetResponse) Reset() {
 	*x = GetResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[5]
+		mi := &file_service_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -349,7 +255,7 @@ func (x *GetResponse) String() string {
 func (*GetResponse) ProtoMessage() {}
 
 func (x *GetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_service_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -362,7 +268,7 @@ func (x *GetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetResponse.ProtoReflect.Descriptor instead.
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{5}
+	return file_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetResponse) GetPessoa() *Pessoa {
@@ -397,7 +303,7 @@ type SearchRequest struct {
 func (x *SearchRequest) Reset() {
 	*x = SearchRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[6]
+		mi := &file_service_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -410,7 +316,7 @@ func (x *SearchRequest) String() string {
 func (*SearchRequest) ProtoMessage() {}
 
 func (x *SearchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_service_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -423,7 +329,7 @@ func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
 func (*SearchRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{6}
+	return file_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SearchRequest) GetTerm() string {
@@ -446,7 +352,7 @@ type SearchResponse struct {
 func (x *SearchResponse) Reset() {
 	*x = SearchResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[7]
+		mi := &file_service_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -459,7 +365,7 @@ func (x *SearchResponse) String() string {
 func (*SearchResponse) ProtoMessage() {}
 
 func (x *SearchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[7]
+	mi := &file_service_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -472,7 +378,7 @@ func (x *SearchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
 func (*SearchResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{7}
+	return file_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SearchResponse) GetPessoas() []*Pessoa {
@@ -511,7 +417,7 @@ type Pessoa struct {
 func (x *Pessoa) Reset() {
 	*x = Pessoa{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_service_proto_msgTypes[8]
+		mi := &file_service_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -524,7 +430,7 @@ func (x *Pessoa) String() string {
 func (*Pessoa) ProtoMessage() {}
 
 func (x *Pessoa) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[8]
+	mi := &file_service_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +443,7 @@ func (x *Pessoa) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Pessoa.ProtoReflect.Descriptor instead.
 func (*Pessoa) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{8}
+	return file_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Pessoa) GetId() string {
@@ -579,13 +485,6 @@ var File_service_proto protoreflect.FileDescriptor
 
 var file_service_proto_rawDesc = []byte{
 	0x0a, 0x0d, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
-	0x31, 0x0a, 0x15, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x75, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x61, 0x70, 0x65, 0x6c,
-	0x69, 0x64, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x61, 0x70, 0x65, 0x6c, 0x69,
-	0x64, 0x6f, 0x22, 0x3b, 0x0a, 0x16, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x75, 0x70, 0x6c, 0x69,
-	0x63, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x21, 0x0a, 0x0c,
-	0x69, 0x73, 0x5f, 0x64, 0x75, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x65, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x0b, 0x69, 0x73, 0x44, 0x75, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x65, 0x22,
 	0x2d, 0x0a, 0x0a, 0x50, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1f, 0x0a,
 	0x06, 0x70, 0x65, 0x73, 0x73, 0x6f, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x07, 0x2e,
 	0x50, 0x65, 0x73, 0x73, 0x6f, 0x61, 0x52, 0x06, 0x70, 0x65, 0x73, 0x73, 0x6f, 0x61, 0x22, 0x61,
@@ -623,21 +522,16 @@ var file_service_proto_rawDesc = []byte{
 	0x06, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x06, 0x0a, 0x02, 0x4f, 0x4b, 0x10, 0x00, 0x12,
 	0x09, 0x0a, 0x05, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10, 0x01, 0x12, 0x0d, 0x0a, 0x09, 0x4e, 0x4f,
 	0x54, 0x5f, 0x46, 0x4f, 0x55, 0x4e, 0x44, 0x10, 0x02, 0x12, 0x11, 0x0a, 0x0d, 0x44, 0x55, 0x50,
-	0x4c, 0x49, 0x43, 0x41, 0x54, 0x45, 0x5f, 0x4b, 0x45, 0x59, 0x10, 0x03, 0x32, 0xc1, 0x01, 0x0a,
-	0x05, 0x43, 0x61, 0x63, 0x68, 0x65, 0x12, 0x22, 0x0a, 0x03, 0x50, 0x75, 0x74, 0x12, 0x0b, 0x2e,
-	0x50, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0c, 0x2e, 0x50, 0x75, 0x74,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x22, 0x0a, 0x03, 0x47, 0x65,
-	0x74, 0x12, 0x0b, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0c,
-	0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2b,
-	0x0a, 0x06, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x0e, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63,
-	0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0f, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63,
-	0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x43, 0x0a, 0x0e, 0x43,
-	0x68, 0x65, 0x63, 0x6b, 0x44, 0x75, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x65, 0x12, 0x16, 0x2e,
-	0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x75, 0x70, 0x6c, 0x69, 0x63, 0x61, 0x74, 0x65, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x44, 0x75, 0x70,
-	0x6c, 0x69, 0x63, 0x61, 0x74, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
-	0x42, 0x09, 0x5a, 0x07, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x4c, 0x49, 0x43, 0x41, 0x54, 0x45, 0x5f, 0x4b, 0x45, 0x59, 0x10, 0x03, 0x32, 0x7c, 0x0a, 0x05,
+	0x43, 0x61, 0x63, 0x68, 0x65, 0x12, 0x22, 0x0a, 0x03, 0x50, 0x75, 0x74, 0x12, 0x0b, 0x2e, 0x50,
+	0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0c, 0x2e, 0x50, 0x75, 0x74, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x22, 0x0a, 0x03, 0x47, 0x65, 0x74,
+	0x12, 0x0b, 0x2e, 0x47, 0x65, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0c, 0x2e,
+	0x47, 0x65, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x2b, 0x0a,
+	0x06, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x0e, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x0f, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x2f,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -653,37 +547,33 @@ func file_service_proto_rawDescGZIP() []byte {
 }
 
 var file_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_service_proto_goTypes = []interface{}{
-	(Status)(0),                    // 0: Status
-	(*CheckDuplicateRequest)(nil),  // 1: CheckDuplicateRequest
-	(*CheckDuplicateResponse)(nil), // 2: CheckDuplicateResponse
-	(*PutRequest)(nil),             // 3: PutRequest
-	(*PutResponse)(nil),            // 4: PutResponse
-	(*GetRequest)(nil),             // 5: GetRequest
-	(*GetResponse)(nil),            // 6: GetResponse
-	(*SearchRequest)(nil),          // 7: SearchRequest
-	(*SearchResponse)(nil),         // 8: SearchResponse
-	(*Pessoa)(nil),                 // 9: Pessoa
+	(Status)(0),            // 0: Status
+	(*PutRequest)(nil),     // 1: PutRequest
+	(*PutResponse)(nil),    // 2: PutResponse
+	(*GetRequest)(nil),     // 3: GetRequest
+	(*GetResponse)(nil),    // 4: GetResponse
+	(*SearchRequest)(nil),  // 5: SearchRequest
+	(*SearchResponse)(nil), // 6: SearchResponse
+	(*Pessoa)(nil),         // 7: Pessoa
 }
 var file_service_proto_depIdxs = []int32{
-	9,  // 0: PutRequest.pessoa:type_name -> Pessoa
-	9,  // 1: PutResponse.pessoa:type_name -> Pessoa
+	7,  // 0: PutRequest.pessoa:type_name -> Pessoa
+	7,  // 1: PutResponse.pessoa:type_name -> Pessoa
 	0,  // 2: PutResponse.status:type_name -> Status
-	9,  // 3: GetResponse.pessoa:type_name -> Pessoa
+	7,  // 3: GetResponse.pessoa:type_name -> Pessoa
 	0,  // 4: GetResponse.status:type_name -> Status
-	9,  // 5: SearchResponse.pessoas:type_name -> Pessoa
+	7,  // 5: SearchResponse.pessoas:type_name -> Pessoa
 	0,  // 6: SearchResponse.status:type_name -> Status
-	3,  // 7: Cache.Put:input_type -> PutRequest
-	5,  // 8: Cache.Get:input_type -> GetRequest
-	7,  // 9: Cache.Search:input_type -> SearchRequest
-	1,  // 10: Cache.CheckDuplicate:input_type -> CheckDuplicateRequest
-	4,  // 11: Cache.Put:output_type -> PutResponse
-	6,  // 12: Cache.Get:output_type -> GetResponse
-	8,  // 13: Cache.Search:output_type -> SearchResponse
-	2,  // 14: Cache.CheckDuplicate:output_type -> CheckDuplicateResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
+	1,  // 7: Cache.Put:input_type -> PutRequest
+	3,  // 8: Cache.Get:input_type -> GetRequest
+	5,  // 9: Cache.Search:input_type -> SearchRequest
+	2,  // 10: Cache.Put:output_type -> PutResponse
+	4,  // 11: Cache.Get:output_type -> GetResponse
+	6,  // 12: Cache.Search:output_type -> SearchResponse
+	10, // [10:13] is the sub-list for method output_type
+	7,  // [7:10] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
 	7,  // [7:7] is the sub-list for extension extendee
 	0,  // [0:7] is the sub-list for field type_name
@@ -696,30 +586,6 @@ func file_service_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_service_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CheckDuplicateRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_service_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CheckDuplicateResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_service_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PutRequest); i {
 			case 0:
 				return &v.state
@@ -731,7 +597,7 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
-		file_service_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_service_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PutResponse); i {
 			case 0:
 				return &v.state
@@ -743,7 +609,7 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
-		file_service_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_service_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetRequest); i {
 			case 0:
 				return &v.state
@@ -755,7 +621,7 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
-		file_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_service_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GetResponse); i {
 			case 0:
 				return &v.state
@@ -767,7 +633,7 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
-		file_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_service_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SearchRequest); i {
 			case 0:
 				return &v.state
@@ -779,7 +645,7 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
-		file_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_service_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SearchResponse); i {
 			case 0:
 				return &v.state
@@ -791,7 +657,7 @@ func file_service_proto_init() {
 				return nil
 			}
 		}
-		file_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Pessoa); i {
 			case 0:
 				return &v.state
@@ -810,7 +676,7 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_service_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

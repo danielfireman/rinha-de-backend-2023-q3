@@ -3,67 +3,82 @@ package main
 import (
 	"context"
 	"strings"
+	"sync"
 
+	"github.com/alphadose/haxmap"
 	pb "github.com/danielfireman/rinha-de-backend-2023-q3/rinhadb/proto"
+	"github.com/rogpeppe/fastuuid"
 	"golang.org/x/sync/semaphore"
 )
 
 const (
-	searchLimit = 50
+	searchLimit           = 50
+	concurrencyLevel      = 2
+	initialSizeMapPessoas = 1e5
+	initialSizeMapItems   = 1e5
 )
 
 type server struct {
 	pb.UnimplementedCacheServer
 
-	// [PerfNote] Não estou usando locks para acessar esses mapas pois o servidor está
-	// configurado para rodar com 1 core.
-	apelidoMap map[string]struct{}     // mapa comum, usado para detectar apelidos duplicados.
-	idMap      map[string]*pb.Pessoa   // mapa comum, usado para o Get.
-	indice     map[string][]*pb.Pessoa // indice invertido, usado para o Search.
+	apelidoMap    *haxmap.Map[string, struct{}]     // mapa usado para detectar apelidos duplicados.
+	idMap         *haxmap.Map[string, *pb.Pessoa]   // mapa usado para o Get.
+	indice        *haxmap.Map[string, []*pb.Pessoa] // indice invertido, usado para o Search.
+	muCriacao     sync.Mutex                        // Lock para tornar atômica a checagem de duplicatas e adição de novas pessoas.
+	chanIndexacao chan *pb.Pessoa                   // Canal para indexação de pessoas de forma assíncrona.
+	uuidGen       *fastuuid.Generator
 
 	// [PerfNote] Como temos apenas uma thread, não queremos que as diversas goroutines (uma por
 	// requisição) fiquem disputando a CPU. Por isso, usamos um semáforo para garantir que apenas uma
-	// esteja acordada num determinado momento.
+	// esteja acordada num determinado momento. Na prática, é como se tivéssemos um worker pool.
 	sem *semaphore.Weighted
 }
 
 func newServer() *server {
-	return &server{
-		apelidoMap: make(map[string]struct{}),
-		idMap:      make(map[string]*pb.Pessoa),
-		indice:     make(map[string][]*pb.Pessoa),
-		sem:        semaphore.NewWeighted(1),
+	s := &server{
+		apelidoMap:    haxmap.New[string, struct{}](initialSizeMapPessoas),
+		idMap:         haxmap.New[string, *pb.Pessoa](initialSizeMapPessoas),
+		indice:        haxmap.New[string, []*pb.Pessoa](initialSizeMapItems),
+		chanIndexacao: make(chan *pb.Pessoa),
+		sem:           semaphore.NewWeighted(concurrencyLevel),
+		uuidGen:       fastuuid.MustNewGenerator(),
 	}
+	// dispara worker de indexação numa nova goroutine.
+	// ela será executada de forma assíncrona, não bloqueando o servidor durante
+	// a criação de pessoas.
+	go func() {
+		s.iniciaIndexador()
+	}()
+	return s
 }
 
 func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	s.sem.Acquire(ctx, 1)
 	defer s.sem.Release(1)
 
-	_, ok := s.apelidoMap[in.Pessoa.Apelido]
+	// [ConcurrencyNote] Checar duplicata e criar uma nova entrada precisa ser executado de forma atômica.
+	s.muCriacao.Lock()
+	// verifica apelidos duplicados.
+	_, ok := s.apelidoMap.Get(in.Pessoa.Apelido)
 	if ok {
+		s.muCriacao.Unlock()
 		return &pb.PutResponse{
 			Status: pb.Status_DUPLICATE_KEY,
 		}, nil
 	}
-
-	// preenchendo mapa.
+	// preenchendo mapa de pessoas, o que vai fazer o get e a checagem de duplicatas funcionarem
+	// logo após o put.
 	pessoa := in.Pessoa
-	s.apelidoMap[in.Pessoa.Apelido] = struct{}{}
-	s.idMap[pessoa.Id] = pessoa
+	pessoa.Id = s.uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
+	s.apelidoMap.Set(in.Pessoa.Apelido, struct{}{})
+	s.idMap.Set(pessoa.Id, pessoa)
+	s.muCriacao.Unlock()
 
-	// preenchendo índice invertido.
-	// coletando lista de termos.
-	termos := strings.Split(strings.ToLower(pessoa.Nome), " ")
-	termos = append(termos, strings.ToLower(pessoa.Apelido))
-	for _, s := range pessoa.Stack {
-		termos = append(termos, strings.ToLower(s))
-	}
+	// dispara a indexação de forma assíncrona.
+	go func() {
+		s.chanIndexacao <- pessoa
+	}()
 
-	// associando termos a pessoa.
-	for _, t := range termos {
-		s.indice[t] = append(s.indice[t], pessoa)
-	}
 	return &pb.PutResponse{
 		Status: pb.Status_OK,
 		Pessoa: pessoa,
@@ -74,7 +89,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	s.sem.Acquire(ctx, 1)
 	defer s.sem.Release(1)
 
-	p, ok := s.idMap[in.Id]
+	p, ok := s.idMap.Get(in.Id)
 	if !ok { // quando o get não tiver resultados, deve retornar not found.
 		return &pb.GetResponse{
 			Status: pb.Status_NOT_FOUND,
@@ -90,7 +105,7 @@ func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchRe
 	s.sem.Acquire(ctx, 1)
 	defer s.sem.Release(1)
 
-	p, ok := s.indice[strings.ToLower(in.Term)]
+	p, ok := s.indice.Get(strings.ToLower(in.Term))
 	if !ok { // quando a busca não tiver resultados, deve retornar 200.
 		return &pb.SearchResponse{
 			Pessoas: []*pb.Pessoa{},
@@ -106,12 +121,21 @@ func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchRe
 	}, nil
 }
 
-func (s *server) CheckDuplicate(ctx context.Context, in *pb.CheckDuplicateRequest) (*pb.CheckDuplicateResponse, error) {
-	s.sem.Acquire(ctx, 1)
-	defer s.sem.Release(1)
+func (s *server) iniciaIndexador() {
+	for {
+		p := <-s.chanIndexacao
+		// preenchendo índice invertido.
+		// coletando lista de termos.
+		termos := strings.Split(strings.ToLower(p.Nome), " ")
+		termos = append(termos, strings.ToLower(p.Apelido))
+		for _, s := range p.Stack {
+			termos = append(termos, strings.ToLower(s))
+		}
 
-	_, ok := s.apelidoMap[in.Apelido]
-	return &pb.CheckDuplicateResponse{
-		IsDuplicate: ok,
-	}, nil
+		// associando termos a pessoa.
+		for _, t := range termos {
+			v, _ := s.indice.Get(t)
+			s.indice.Set(t, append(v, p))
+		}
+	}
 }

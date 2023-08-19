@@ -3,6 +3,7 @@ module github.com/danielfireman/rinha-de-backend-2023-q3
 go 1.19
 
 require (
+	github.com/alphadose/haxmap v1.2.0
 	github.com/bytedance/sonic v1.10.0
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/rogpeppe/fastuuid v1.2.0
@@ -33,6 +34,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.11.0 // indirect
+	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.11.0 // indirect

@@ -38,12 +38,10 @@ func (c *RinhaDB) Create(p *Pessoa) error {
 		return fmt.Errorf("error cache put: %w", err)
 	}
 	switch resp.Status {
-	case pb.Status_NOT_FOUND:
-		return ErrNotFound
-	case pb.Status_ERROR:
-		return fmt.Errorf("status error in cache put: %s", resp.Msg)
 	case pb.Status_DUPLICATE_KEY:
 		return ErrDuplicateKey
+	case pb.Status_ERROR:
+		return fmt.Errorf("status error in cache put: %s", resp.Msg)
 	default:
 		return nil
 	}
@@ -76,18 +74,13 @@ func (c *RinhaDB) Search(term string) ([]*Pessoa, error) {
 	resp, err := c.client.Search(context.TODO(), &pb.SearchRequest{
 		Term: term,
 	})
-	// casos de erro.
 	if err != nil {
 		return nil, fmt.Errorf("error rinhadb search: %w", err)
 	}
 	if resp.Status == pb.Status_ERROR {
 		return nil, fmt.Errorf("status error in rinhadb get: %s", resp.Msg)
 	}
-	// caso especial para quando não encontrar o termo.
-	if len(resp.Pessoas) == 0 {
-		return []*Pessoa{}, nil
-	}
-	var pessoas []*Pessoa
+	pessoas := []*Pessoa{}
 	for _, p := range resp.Pessoas {
 		pessoas = append(pessoas, &Pessoa{
 			ID:         p.Id,
@@ -98,14 +91,4 @@ func (c *RinhaDB) Search(term string) ([]*Pessoa, error) {
 		})
 	}
 	return pessoas, nil
-}
-
-func (c *RinhaDB) ChecaDuplicata(apelido string) (bool, error) {
-	resp, err := c.client.CheckDuplicate(context.TODO(), &pb.CheckDuplicateRequest{
-		Apelido: apelido,
-	})
-	if err != nil {
-		return false, fmt.Errorf("error rinhadb search: %w", err)
-	}
-	return resp.IsDuplicate, nil
 }

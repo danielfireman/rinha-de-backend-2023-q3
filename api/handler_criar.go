@@ -2,15 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rogpeppe/fastuuid"
-)
-
-var (
-	uuidGen = fastuuid.MustNewGenerator()
 )
 
 type criarPessoa struct {
@@ -27,11 +21,8 @@ func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB) *criarPessoa {
 	go func() {
 		for {
 			p := <-c
-			if err := rinhaDB.Create(p); err != nil {
-				log.Printf("error creating person %s at rinhadb: %w", p.ID, err)
-			}
 			if err := mongoDB.Create(p); err != nil {
-				log.Printf("error creating person %s at mongodb: %w", p.ID, err)
+				panic(fmt.Errorf("error creating person %s at mongodb: %w", p.ID, err))
 			}
 		}
 	}()
@@ -58,17 +49,13 @@ func (cp criarPessoa) handler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nascimento não preenchido"))
 	}
 
-	// checando duplicidade de apelido.
-	if isDup, err := cp.rinhadb.ChecaDuplicata(*p.Apelido); err == nil {
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error checking duplicate: %w", err))
+	// cria pessoa no rinhadb.
+	if err := cp.rinhadb.Create(p); err != nil {
+		if err == ErrDuplicateKey {
+			return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado %s", *p.Apelido))
 		}
-		if isDup {
-			return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado"))
-		}
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error criando pessoa: %w", err))
 	}
-	// preenchimento do ID
-	p.ID = uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
 
 	// envia evento para o worker que atualiza os bancos de dados.
 	// somente executar quando a requisição for válida.

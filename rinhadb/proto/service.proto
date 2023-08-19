@@ -5,15 +5,6 @@ service Cache {
     rpc Put (PutRequest) returns (PutResponse) {}
     rpc Get (GetRequest) returns (GetResponse) {}
     rpc Search(SearchRequest) returns (SearchResponse) {}
-    rpc CheckDuplicate(CheckDuplicateRequest) returns (CheckDuplicateResponse) {}
-  }
-
-  message CheckDuplicateRequest {
-    string apelido = 1;
-  }
-
-  message CheckDuplicateResponse {
-    bool is_duplicate = 1;
   }
 
   message PutRequest {
