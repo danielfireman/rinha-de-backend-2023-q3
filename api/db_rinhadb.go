@@ -44,20 +44,20 @@ func (c *RinhaDB) Create(p *Pessoa) (string, string, error) {
 	return resp.Id, resp.Pessoa, nil
 }
 
-func (c *RinhaDB) Get(id string) (string, error) {
+func (c *RinhaDB) Get(id string) (string, string, error) {
 	resp, err := c.client.Get(context.TODO(), &pb.GetRequest{
 		Id: id,
 	})
 	if err != nil {
-		return "", fmt.Errorf("error cache get: %w", err)
+		return "", "", fmt.Errorf("error cache get: %w", err)
 	}
 	switch resp.Status {
 	case pb.Status_NOT_FOUND:
-		return "", ErrNotFound
+		return "", "", ErrNotFound
 	case pb.Status_ERROR:
-		return "", fmt.Errorf("status error in cache get: %s", resp.Msg)
+		return "", "", fmt.Errorf("status error in cache get: %s", resp.Msg)
 	}
-	return resp.Pessoa, nil
+	return resp.Pessoa, resp.Apelido, nil
 }
 
 func (c *RinhaDB) Search(term string) (string, error) {

@@ -9,15 +9,16 @@ import (
 )
 
 type criarPessoa struct {
-	db      DB
-	rinhadb *RinhaDB
-	cache   *haxmap.Map[string, string]
+	db           DB
+	rinhadb      *RinhaDB
+	cache        *haxmap.Map[string, string]
+	apelidoCache *haxmap.Map[string, struct{}]
 
 	// canal para enviar chamadas remotas para criação de pessoa de forma assíncrona.
 	chanCriacao chan *Pessoa
 }
 
-func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB, cache *haxmap.Map[string, string]) *criarPessoa {
+func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB, cache *haxmap.Map[string, string], apelidoCache *haxmap.Map[string, struct{}]) *criarPessoa {
 	c := make(chan *Pessoa)
 	// inicializa worker que atualiza o mongodb de forma assíncrona.
 	go func() {
@@ -29,10 +30,11 @@ func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB, cache *haxmap.Map[string, stri
 		}
 	}()
 	return &criarPessoa{
-		db:          mongoDB,
-		rinhadb:     rinhaDB,
-		chanCriacao: c,
-		cache:       cache,
+		db:           mongoDB,
+		rinhadb:      rinhaDB,
+		cache:        cache,
+		apelidoCache: apelidoCache,
+		chanCriacao:  c,
 	}
 }
 
@@ -52,10 +54,16 @@ func (cp criarPessoa) handler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nascimento não preenchido"))
 	}
 
+	// primeiro checa apelido no cache, evitando um RT no rinhadb para verificar.
+	if _, ok := cp.apelidoCache.Get(*p.Apelido); ok {
+		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado %s", *p.Apelido))
+	}
+
 	// cria pessoa no rinhadb.
 	if pID, pStr, err := cp.rinhadb.Create(p); err == nil {
 		// adiciona pessoa no cache.
 		cp.cache.Set(p.ID, pStr)
+		cp.apelidoCache.Set(*p.Apelido, struct{}{})
 
 		// envia evento para o worker que atualiza os bancos de dados.
 		// somente executar quando a requisição for válida.

@@ -9,8 +9,9 @@ import (
 )
 
 type getPessoa struct {
-	rinhadb *RinhaDB
-	cache   *haxmap.Map[string, string]
+	rinhadb      *RinhaDB
+	cache        *haxmap.Map[string, string]
+	apelidoCache *haxmap.Map[string, struct{}]
 }
 
 func (gp getPessoa) handler(c echo.Context) error {
@@ -25,14 +26,16 @@ func (gp getPessoa) handler(c echo.Context) error {
 	}
 
 	// caso não encontre no cache, busca no rinhadb.
-	p, err := gp.rinhadb.Get(id)
+	pessoaStr, apelido, err := gp.rinhadb.Get(id)
 	if err != nil {
 		if err == ErrNotFound {
 			return echo.ErrNotFound
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	} else {
+		// caso encontre, atualiza o cache.
+		gp.cache.Set(id, pessoaStr)
+		gp.apelidoCache.Set(apelido, struct{}{})
+		return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(pessoaStr))
 	}
-	// caso encontre, atualiza o cache.
-	gp.cache.Set(id, p)
-	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(p))
 }

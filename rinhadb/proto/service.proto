@@ -24,8 +24,9 @@ service Cache {
 
   message GetResponse {
     string pessoa = 1;
-    Status status = 2;
-    string msg = 3;
+    string apelido = 2;
+    Status status = 3;
+    string msg = 4;
   }
 
   message SearchRequest {

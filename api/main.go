@@ -26,13 +26,14 @@ func main() {
 	db := MustNewMongoDB()
 
 	cache := haxmap.New[string, string](1e5)
+	apelidoCache := haxmap.New[string, struct{}](1e5)
 
 	// [PerfNote] Criando um RPC Stub do rinha DB por tipo de chamada, pois todas
 	// são estressadas. Perftip vinda de https://grpc.io/docs/guides/performance/
-	e.POST("/pessoas", newCriarPessoa(db, MustNewRinhaDB(), cache).handler)
+	e.POST("/pessoas", newCriarPessoa(db, MustNewRinhaDB(), cache, apelidoCache).handler)
 	e.GET("/pessoas", func(c echo.Context) error { return echo.ErrNotFound })
 	e.GET("/pessoas", buscaPessoas{MustNewRinhaDB()}.handler)
-	e.GET("/pessoas/:id", getPessoa{MustNewRinhaDB(), cache}.handler)
+	e.GET("/pessoas/:id", getPessoa{MustNewRinhaDB(), cache, apelidoCache}.handler)
 	e.GET("/contagem-pessoas", contarPessoas{db}.handler)
 
 	e.Logger.Fatal(e.Start(":8080"))
