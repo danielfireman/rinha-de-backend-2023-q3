@@ -5,6 +5,7 @@ import (
 
 	"github.com/alphadose/haxmap"
 	"github.com/labstack/echo/v4"
+	"github.com/rogpeppe/fastuuid"
 )
 
 type getPessoa struct {
@@ -14,7 +15,7 @@ type getPessoa struct {
 
 func (gp getPessoa) handler(c echo.Context) error {
 	id := c.Param("id")
-	if id == "" {
+	if id == "" || !fastuuid.ValidHex128(id) {
 		return echo.ErrBadRequest
 	}
 
