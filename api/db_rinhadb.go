@@ -10,9 +10,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// NOTA IMPORTANTE: [known issue] Tem um problema é que pode acontecer quando ocorrem dois creates iguais consecutivos. Ambos passam pelo checa duplicatas, porém, quando o segundo chega na criação (que é assíncrona)
-// dá pau na chamada.
-
 type RinhaDB struct {
 	client pb.CacheClient
 }
