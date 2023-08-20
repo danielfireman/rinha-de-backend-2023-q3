@@ -16,9 +16,8 @@ func (bp buscaPessoas) handler(c echo.Context) error {
 		return echo.ErrBadRequest
 	}
 	p, err := bp.rinhadb.Search(termo)
-	switch err {
-	case nil:
-		return c.JSON(http.StatusOK, p)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(p))
 }

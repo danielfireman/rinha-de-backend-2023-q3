@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -21,11 +22,11 @@ const (
 type server struct {
 	pb.UnimplementedCacheServer
 
-	apelidoMap    *haxmap.Map[string, struct{}]     // mapa usado para detectar apelidos duplicados.
-	idMap         *haxmap.Map[string, *pb.Pessoa]   // mapa usado para o Get.
-	indice        *haxmap.Map[string, []*pb.Pessoa] // indice invertido, usado para o Search.
-	muCriacao     sync.Mutex                        // Lock para tornar atômica a checagem de duplicatas e adição de novas pessoas.
-	chanIndexacao chan *pb.Pessoa                   // Canal para indexação de pessoas de forma assíncrona.
+	apelidoMap    *haxmap.Map[string, struct{}] // mapa usado para detectar apelidos duplicados.
+	idMap         *haxmap.Map[string, string]   // mapa usado para o Get.
+	indice        *haxmap.Map[string, []string] // indice invertido, usado para o Search.
+	muCriacao     sync.Mutex                    // Lock para tornar atômica a checagem de duplicatas e adição de novas pessoas.
+	chanIndexacao chan *pb.Pessoa               // Canal para indexação de pessoas de forma assíncrona.
 	uuidGen       *fastuuid.Generator
 
 	// [PerfNote] Como temos apenas uma thread, não queremos que as diversas goroutines (uma por
@@ -37,8 +38,8 @@ type server struct {
 func newServer() *server {
 	s := &server{
 		apelidoMap:    haxmap.New[string, struct{}](initialSizeMapPessoas),
-		idMap:         haxmap.New[string, *pb.Pessoa](initialSizeMapPessoas),
-		indice:        haxmap.New[string, []*pb.Pessoa](initialSizeMapItems),
+		idMap:         haxmap.New[string, string](initialSizeMapPessoas),
+		indice:        haxmap.New[string, []string](initialSizeMapItems),
 		chanIndexacao: make(chan *pb.Pessoa),
 		sem:           semaphore.NewWeighted(concurrencyLevel),
 		uuidGen:       fastuuid.MustNewGenerator(),
@@ -70,8 +71,11 @@ func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, e
 	// logo após o put.
 	pessoa := in.Pessoa
 	pessoa.Id = s.uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
-	s.apelidoMap.Set(in.Pessoa.Apelido, struct{}{})
-	s.idMap.Set(pessoa.Id, pessoa)
+
+	// atualiza bancos de dados com valor pré-processado (pronto para ser retornado).
+	pStr := pessoa2Str(pessoa)
+	s.apelidoMap.Set(pessoa.Apelido, struct{}{})
+	s.idMap.Set(pessoa.Id, pStr)
 	s.muCriacao.Unlock()
 
 	// dispara a indexação de forma assíncrona.
@@ -80,8 +84,9 @@ func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, e
 	}()
 
 	return &pb.PutResponse{
+		Id:     pessoa.Id,
+		Pessoa: pStr,
 		Status: pb.Status_OK,
-		Pessoa: pessoa,
 	}, nil
 }
 
@@ -105,18 +110,18 @@ func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchRe
 	s.sem.Acquire(ctx, 1)
 	defer s.sem.Release(1)
 
-	p, ok := s.indice.Get(strings.ToLower(in.Term))
-	if !ok { // quando a busca não tiver resultados, deve retornar 200.
-		return &pb.SearchResponse{
-			Pessoas: []*pb.Pessoa{},
-			Status:  pb.Status_OK,
-		}, nil
-	}
-	if len(p) > searchLimit {
-		p = p[:searchLimit]
-	}
+	resCount := 0
+	results := []string{}
+	term := strings.ToLower(in.Term)
+	s.indice.ForEach(func(k string, v []string) bool {
+		if strings.Contains(k, term) {
+			results = append(results, v...)
+		}
+		resCount++
+		return resCount < searchLimit
+	})
 	return &pb.SearchResponse{
-		Pessoas: p,
+		Pessoas: fmt.Sprintf("[%s]", strings.Join(results, ",")),
 		Status:  pb.Status_OK,
 	}, nil
 }
@@ -135,7 +140,16 @@ func (s *server) iniciaIndexador() {
 		// associando termos a pessoa.
 		for _, t := range termos {
 			v, _ := s.indice.Get(t)
-			s.indice.Set(t, append(v, p))
+			s.indice.Set(t, append(v, pessoa2Str(p)))
 		}
 	}
+}
+
+func pessoa2Str(p *pb.Pessoa) string {
+	return fmt.Sprintf(`{"id": "%s", "apelido": "%s", "nome": "%s", "nascimento": "%s", "stack": %s}`,
+		p.Id,
+		p.Apelido,
+		p.Nome,
+		p.Nascimento,
+		`["`+strings.Join(p.Stack, `", "`)+`"]`)
 }

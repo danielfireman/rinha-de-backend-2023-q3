@@ -3,13 +3,13 @@ package main
 import (
 	"net/http"
 
-	"github.com/dgraph-io/ristretto"
+	"github.com/alphadose/haxmap"
 	"github.com/labstack/echo/v4"
 )
 
 type getPessoa struct {
 	rinhadb *RinhaDB
-	cache   *ristretto.Cache
+	cache   *haxmap.Map[string, string]
 }
 
 func (gp getPessoa) handler(c echo.Context) error {
@@ -20,21 +20,18 @@ func (gp getPessoa) handler(c echo.Context) error {
 
 	// verifica primeiro o cache.
 	if p, ok := gp.cache.Get(id); ok {
-		return c.JSON(http.StatusOK, p)
+		return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(p))
 	}
 
-	// caso não encontre, busca no rinhadb.
+	// caso não encontre no cache, busca no rinhadb.
 	p, err := gp.rinhadb.Get(id)
-	switch err {
-	case nil:
-
-		// caso encontre, atualiza o cache.
-		gp.cache.Set(id, p, 1)
-		gp.cache.Set(p.Apelido, p, 1)
-		return c.JSON(http.StatusOK, p)
-
-	case ErrNotFound:
-		return echo.ErrNotFound
+	if err != nil {
+		if err == ErrNotFound {
+			return echo.ErrNotFound
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	// caso encontre, atualiza o cache.
+	gp.cache.Set(id, p)
+	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(p))
 }

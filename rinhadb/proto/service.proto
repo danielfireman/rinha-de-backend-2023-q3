@@ -12,9 +12,10 @@ service Cache {
   }
   
   message PutResponse {
-    Pessoa pessoa = 1;
-    Status status = 2;
-    string msg = 3;
+    string pessoa = 1;
+    string id = 2;
+    Status status = 3;
+    string msg = 4;
   }
 
   message GetRequest {
@@ -22,7 +23,7 @@ service Cache {
   }
 
   message GetResponse {
-    Pessoa pessoa = 1;
+    string pessoa = 1;
     Status status = 2;
     string msg = 3;
   }
@@ -32,7 +33,7 @@ service Cache {
   } 
  
   message SearchResponse {
-    repeated Pessoa pessoas = 1;
+    string pessoas = 1;
     Status status = 2;
     string msg = 3;
   }

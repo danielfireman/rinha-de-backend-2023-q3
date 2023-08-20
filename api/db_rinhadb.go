@@ -27,68 +27,51 @@ func MustNewRinhaDB() *RinhaDB {
 	}
 }
 
-func (c *RinhaDB) Create(p *Pessoa) error {
+func (c *RinhaDB) Create(p *Pessoa) (string, string, error) {
 	resp, err := c.client.Put(context.TODO(), &pb.PutRequest{Pessoa: &pb.Pessoa{
-		Id:      p.ID,
-		Apelido: *p.Apelido,
-		Nome:    *p.Nome,
-		Stack:   p.Stack,
+		Id:         p.ID,
+		Apelido:    *p.Apelido,
+		Nome:       *p.Nome,
+		Nascimento: *p.Nascimento,
+		Stack:      p.Stack,
 	}})
 	if err != nil {
-		return fmt.Errorf("error cache put: %w", err)
+		return "", "", fmt.Errorf("error cache put: %w", err)
 	}
 	switch resp.Status {
 	case pb.Status_DUPLICATE_KEY:
-		return ErrDuplicateKey
+		return "", "", ErrDuplicateKey
 	case pb.Status_ERROR:
-		return fmt.Errorf("status error in cache put: %s", resp.Msg)
-	default:
-		return nil
+		return "", "", fmt.Errorf("status error in cache put: %s", resp.Msg)
 	}
+	return resp.Id, resp.Pessoa, nil
 }
 
-func (c *RinhaDB) Get(id string) (*Pessoa, error) {
+func (c *RinhaDB) Get(id string) (string, error) {
 	resp, err := c.client.Get(context.TODO(), &pb.GetRequest{
 		Id: id,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error cache get: %w", err)
+		return "", fmt.Errorf("error cache get: %w", err)
 	}
 	switch resp.Status {
 	case pb.Status_NOT_FOUND:
-		return nil, ErrNotFound
+		return "", ErrNotFound
 	case pb.Status_ERROR:
-		return nil, fmt.Errorf("status error in cache get: %s", resp.Msg)
+		return "", fmt.Errorf("status error in cache get: %s", resp.Msg)
 	}
-	p := Pessoa{
-		ID:         resp.Pessoa.Id,
-		Apelido:    &resp.Pessoa.Apelido,
-		Nome:       &resp.Pessoa.Nome,
-		Nascimento: &resp.Pessoa.Nascimento,
-		Stack:      resp.Pessoa.Stack,
-	}
-	return &p, nil
+	return resp.Pessoa, nil
 }
 
-func (c *RinhaDB) Search(term string) ([]*Pessoa, error) {
+func (c *RinhaDB) Search(term string) (string, error) {
 	resp, err := c.client.Search(context.TODO(), &pb.SearchRequest{
 		Term: term,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error rinhadb search: %w", err)
+		return "", fmt.Errorf("error rinhadb search: %w", err)
 	}
 	if resp.Status == pb.Status_ERROR {
-		return nil, fmt.Errorf("status error in rinhadb get: %s", resp.Msg)
+		return "", fmt.Errorf("status error in rinhadb get: %s", resp.Msg)
 	}
-	pessoas := []*Pessoa{}
-	for _, p := range resp.Pessoas {
-		pessoas = append(pessoas, &Pessoa{
-			ID:         p.Id,
-			Apelido:    &p.Apelido,
-			Nome:       &p.Nome,
-			Nascimento: &p.Nascimento,
-			Stack:      p.Stack,
-		})
-	}
-	return pessoas, nil
+	return resp.Pessoas, nil
 }

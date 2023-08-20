@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/dgraph-io/ristretto"
+	"github.com/alphadose/haxmap"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -25,16 +25,7 @@ func main() {
 
 	db := MustNewMongoDB()
 
-	// Configurações de cache vindas de https://github.com/dgraph-io/ristretto
-	// Só diminui o tamanho máximo do cache.
-	cache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: 1e7,    // number of keys to track frequency of (10M).
-		MaxCost:     1 << 5, // maximum cost of cache (0,15GB).
-		BufferItems: 64,     // number of keys per Get buffer.
-	})
-	if err != nil {
-		panic(err)
-	}
+	cache := haxmap.New[string, string](1e5)
 
 	// [PerfNote] Criando um RPC Stub do rinha DB por tipo de chamada, pois todas
 	// são estressadas. Perftip vinda de https://grpc.io/docs/guides/performance/
