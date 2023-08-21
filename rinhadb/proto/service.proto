@@ -4,7 +4,7 @@ option go_package = "./proto";
 service Cache {
     rpc Put (PutRequest) returns (PutResponse) {}
     rpc Get (GetRequest) returns (GetResponse) {}
-    rpc Search(SearchRequest) returns (SearchResponse) {}
+    rpc Search(SearchRequest) returns (stream SearchResponse) {}
   }
 
   message PutRequest {
@@ -34,9 +34,7 @@ service Cache {
   } 
  
   message SearchResponse {
-    string pessoas = 1;
-    Status status = 2;
-    string msg = 3;
+    string pessoa = 1;
   }
 
   enum Status {

@@ -106,24 +106,26 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	}, nil
 }
 
-func (s *server) Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
-	s.sem.Acquire(ctx, 1)
+func (s *server) Search(req *pb.SearchRequest, stream pb.Cache_SearchServer) error { //Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
+	s.sem.Acquire(context.TODO(), 1)
 	defer s.sem.Release(1)
 
 	resCount := 0
-	results := []string{}
-	term := strings.ToLower(in.Term)
-	s.indice.ForEach(func(k string, v []string) bool {
+	term := strings.ToLower(req.Term)
+	var sendError error
+	s.indice.ForEach(func(k string, pessoas []string) bool {
 		if strings.Contains(k, term) {
-			results = append(results, v...)
+			for _, p := range pessoas {
+				if err := stream.Send(&pb.SearchResponse{Pessoa: p}); err != nil {
+					sendError = err
+					return false
+				}
+			}
 		}
 		resCount++
 		return resCount < searchLimit
 	})
-	return &pb.SearchResponse{
-		Pessoas: fmt.Sprintf("[%s]", strings.Join(results, ",")),
-		Status:  pb.Status_OK,
-	}, nil
+	return sendError
 }
 
 func (s *server) iniciaIndexador() {

@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"strings"
 
 	pb "github.com/danielfireman/rinha-de-backend-2023-q3/rinhadb/proto"
 	"google.golang.org/grpc"
@@ -61,14 +63,22 @@ func (c *RinhaDB) Get(id string) (string, string, error) {
 }
 
 func (c *RinhaDB) Search(term string) (string, error) {
-	resp, err := c.client.Search(context.TODO(), &pb.SearchRequest{
+	stream, err := c.client.Search(context.TODO(), &pb.SearchRequest{
 		Term: term,
 	})
 	if err != nil {
 		return "", fmt.Errorf("error rinhadb search: %w", err)
 	}
-	if resp.Status == pb.Status_ERROR {
-		return "", fmt.Errorf("status error in rinhadb get: %s", resp.Msg)
+	pessoas := []string{}
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("error on searching term %s: %w", term, err)
+		}
+		pessoas = append(pessoas, resp.Pessoa)
 	}
-	return resp.Pessoas, nil
+	return fmt.Sprintf("[%s]", strings.Join(pessoas, ",")), nil
 }

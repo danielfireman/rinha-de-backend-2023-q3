@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type CacheClient interface {
 	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (Cache_SearchClient, error)
 }
 
 type cacheClient struct {
@@ -53,13 +53,36 @@ func (c *cacheClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.Call
 	return out, nil
 }
 
-func (c *cacheClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
-	out := new(SearchResponse)
-	err := c.cc.Invoke(ctx, "/Cache/Search", in, out, opts...)
+func (c *cacheClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (Cache_SearchClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Cache_ServiceDesc.Streams[0], "/Cache/Search", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &cacheSearchClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Cache_SearchClient interface {
+	Recv() (*SearchResponse, error)
+	grpc.ClientStream
+}
+
+type cacheSearchClient struct {
+	grpc.ClientStream
+}
+
+func (x *cacheSearchClient) Recv() (*SearchResponse, error) {
+	m := new(SearchResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // CacheServer is the server API for Cache service.
@@ -68,7 +91,7 @@ func (c *cacheClient) Search(ctx context.Context, in *SearchRequest, opts ...grp
 type CacheServer interface {
 	Put(context.Context, *PutRequest) (*PutResponse, error)
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	Search(*SearchRequest, Cache_SearchServer) error
 	mustEmbedUnimplementedCacheServer()
 }
 
@@ -82,8 +105,8 @@ func (UnimplementedCacheServer) Put(context.Context, *PutRequest) (*PutResponse,
 func (UnimplementedCacheServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedCacheServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Search not implemented")
+func (UnimplementedCacheServer) Search(*SearchRequest, Cache_SearchServer) error {
+	return status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
 func (UnimplementedCacheServer) mustEmbedUnimplementedCacheServer() {}
 
@@ -134,22 +157,25 @@ func _Cache_Get_Handler(srv interface{}, ctx context.Context, dec func(interface
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cache_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SearchRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _Cache_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SearchRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(CacheServer).Search(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Cache/Search",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CacheServer).Search(ctx, req.(*SearchRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(CacheServer).Search(m, &cacheSearchServer{stream})
+}
+
+type Cache_SearchServer interface {
+	Send(*SearchResponse) error
+	grpc.ServerStream
+}
+
+type cacheSearchServer struct {
+	grpc.ServerStream
+}
+
+func (x *cacheSearchServer) Send(m *SearchResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // Cache_ServiceDesc is the grpc.ServiceDesc for Cache service.
@@ -167,11 +193,13 @@ var Cache_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Get",
 			Handler:    _Cache_Get_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "Search",
-			Handler:    _Cache_Search_Handler,
+			StreamName:    "Search",
+			Handler:       _Cache_Search_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "service.proto",
 }
