@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/alphadose/haxmap"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/bytedance/sonic"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Pessoa struct {
@@ -17,12 +17,14 @@ type Pessoa struct {
 }
 
 func main() {
-	e := echo.New()
-	e.JSONSerializer = newSerializer() // using a faster JSON serializer.
-	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-		Timeout: 1 * time.Minute,
-	}))
 
+	// [PerfNote] Usando sonic para json marshal e unmarshal.
+	app := fiber.New(fiber.Config{
+		ReadTimeout:  1 * time.Minute,
+		WriteTimeout: 1 * time.Minute,
+		JSONEncoder:  sonic.ConfigFastest.Marshal,
+		JSONDecoder:  sonic.ConfigFastest.Unmarshal,
+	})
 	db := MustNewMongoDB()
 
 	cache := haxmap.New[string, string](1e5)
@@ -30,11 +32,10 @@ func main() {
 
 	// [PerfNote] Criando um RPC Stub do rinha DB por tipo de chamada, pois todas
 	// são estressadas. Perftip vinda de https://grpc.io/docs/guides/performance/
-	e.POST("/pessoas", newCriarPessoa(db, MustNewRinhaDB(), cache, apelidoCache).handler)
-	e.GET("/pessoas", func(c echo.Context) error { return echo.ErrNotFound })
-	e.GET("/pessoas", buscaPessoas{MustNewRinhaDB()}.handler)
-	e.GET("/pessoas/:id", getPessoa{MustNewRinhaDB(), cache, apelidoCache}.handler)
-	e.GET("/contagem-pessoas", contarPessoas{db}.handler)
+	app.Post("/pessoas", newCriarPessoa(db, MustNewRinhaDB(), cache, apelidoCache).handler)
+	app.Get("/pessoas/:id", getPessoa{MustNewRinhaDB(), cache, apelidoCache}.handler)
+	app.Get("/pessoas", buscaPessoas{MustNewRinhaDB()}.handler)
+	app.Get("/contagem-pessoas", contarPessoas{db}.handler)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	panic(app.Listen(":8080"))
 }

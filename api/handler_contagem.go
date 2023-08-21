@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 type contarPessoas struct {
 	db DB
 }
 
-func (cp contarPessoas) handler(c echo.Context) error {
+func (cp contarPessoas) handler(c *fiber.Ctx) error {
 	n, err := cp.db.Count()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
-	return c.String(http.StatusOK, fmt.Sprintf("%d", n))
+
+	return c.Status(fiber.StatusOK).
+		SendString(fmt.Sprintf("%d", n))
 }

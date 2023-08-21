@@ -3,21 +3,24 @@ package main
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 type buscaPessoas struct {
 	rinhadb *RinhaDB
 }
 
-func (bp buscaPessoas) handler(c echo.Context) error {
-	termo := c.QueryParam("t")
+func (bp buscaPessoas) handler(c *fiber.Ctx) error {
+	termo := c.Query("t")
 	if termo == "" {
-		return echo.ErrBadRequest
+		return fiber.ErrBadRequest
 	}
 	p, err := bp.rinhadb.Search(termo)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
-	return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(p))
+	c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+	c.Status(http.StatusOK)
+	c.SendString(p)
+	return nil
 }

@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/alphadose/haxmap"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 )
 
 type criarPessoa struct {
@@ -38,25 +37,25 @@ func newCriarPessoa(mongoDB DB, rinhaDB *RinhaDB, cache *haxmap.Map[string, stri
 	}
 }
 
-func (cp criarPessoa) handler(c echo.Context) error {
+func (cp criarPessoa) handler(c *fiber.Ctx) error {
 	p := new(Pessoa)
-	if err := c.Bind(p); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("error binding pessoa: %w", err))
+	if err := c.BodyParser(p); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("error binding pessoa: %s", err))
 	}
 	// validação
 	if p.Nome == nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nome não preenchido"))
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "error campo nome não preenchido")
 	}
 	if p.Apelido == nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo apelido não preenchido"))
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "error campo apelido não preenchido")
 	}
 	if p.Nascimento == nil {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error campo nascimento não preenchido"))
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "error campo nascimento não preenchido")
 	}
 
 	// primeiro checa apelido no cache, evitando um RT no rinhadb para verificar.
 	if _, ok := cp.apelidoCache.Get(*p.Apelido); ok {
-		return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado %s", *p.Apelido))
+		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("error apelido duplicado %s", *p.Apelido))
 	}
 
 	// cria pessoa no rinhadb.
@@ -71,13 +70,13 @@ func (cp criarPessoa) handler(c echo.Context) error {
 			cp.chanCriacao <- p
 		}()
 
-		c.Response().Header().Set("Location", fmt.Sprintf("/pessoas/%s", pID))
-		return c.NoContent(http.StatusCreated)
+		c.Set("Location", fmt.Sprintf("/pessoas/%s", pID))
+		return c.SendStatus(fiber.StatusCreated)
 
 	} else {
 		if err == ErrDuplicateKey {
-			return echo.NewHTTPError(http.StatusUnprocessableEntity, fmt.Errorf("error apelido duplicado %s", *p.Apelido))
+			return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("error apelido duplicado %s", *p.Apelido))
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Errorf("error criando pessoa: %w", err))
+		return fiber.NewError(fiber.StatusInternalServerError, fmt.Sprintf("error criando pessoa: %s", err))
 	}
 }

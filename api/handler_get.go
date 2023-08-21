@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/alphadose/haxmap"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rogpeppe/fastuuid"
 )
 
@@ -14,28 +14,32 @@ type getPessoa struct {
 	apelidoCache *haxmap.Map[string, struct{}]
 }
 
-func (gp getPessoa) handler(c echo.Context) error {
-	id := c.Param("id")
+func (gp getPessoa) handler(c *fiber.Ctx) error {
+	id := c.Params("id")
 	if id == "" || !fastuuid.ValidHex128(id) {
-		return echo.ErrBadRequest
+		return fiber.ErrBadRequest
 	}
 
 	// verifica primeiro o cache.
 	if p, ok := gp.cache.Get(id); ok {
-		return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(p))
+		c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+		return c.Status(http.StatusOK).
+			SendString(p)
 	}
 
 	// caso não encontre no cache, busca no rinhadb.
 	pessoaStr, apelido, err := gp.rinhadb.Get(id)
 	if err != nil {
 		if err == ErrNotFound {
-			return echo.ErrNotFound
+			return fiber.NewError(fiber.StatusNotFound, "pessoa não encontrada: %s", id)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	} else {
 		// caso encontre, atualiza o cache.
 		gp.cache.Set(id, pessoaStr)
 		gp.apelidoCache.Set(apelido, struct{}{})
-		return c.Blob(http.StatusOK, echo.MIMEApplicationJSON, []byte(pessoaStr))
+		c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
+		return c.Status(http.StatusOK).
+			SendString(pessoaStr)
 	}
 }
