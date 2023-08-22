@@ -18,47 +18,69 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// CacheClient is the client API for Cache service.
+// RinhaDBClient is the client API for RinhaDB service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type CacheClient interface {
-	Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
+type RinhaDBClient interface {
+	NewPerson(ctx context.Context, opts ...grpc.CallOption) (RinhaDB_NewPersonClient, error)
 	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (Cache_SearchClient, error)
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (RinhaDB_SearchClient, error)
 }
 
-type cacheClient struct {
+type rinhaDBClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewCacheClient(cc grpc.ClientConnInterface) CacheClient {
-	return &cacheClient{cc}
+func NewRinhaDBClient(cc grpc.ClientConnInterface) RinhaDBClient {
+	return &rinhaDBClient{cc}
 }
 
-func (c *cacheClient) Put(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
-	out := new(PutResponse)
-	err := c.cc.Invoke(ctx, "/Cache/Put", in, out, opts...)
+func (c *rinhaDBClient) NewPerson(ctx context.Context, opts ...grpc.CallOption) (RinhaDB_NewPersonClient, error) {
+	stream, err := c.cc.NewStream(ctx, &RinhaDB_ServiceDesc.Streams[0], "/RinhaDB/NewPerson", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &rinhaDBNewPersonClient{stream}
+	return x, nil
 }
 
-func (c *cacheClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+type RinhaDB_NewPersonClient interface {
+	Send(*Pessoa) error
+	Recv() (*Pessoa, error)
+	grpc.ClientStream
+}
+
+type rinhaDBNewPersonClient struct {
+	grpc.ClientStream
+}
+
+func (x *rinhaDBNewPersonClient) Send(m *Pessoa) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *rinhaDBNewPersonClient) Recv() (*Pessoa, error) {
+	m := new(Pessoa)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *rinhaDBClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/Cache/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/RinhaDB/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *cacheClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (Cache_SearchClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Cache_ServiceDesc.Streams[0], "/Cache/Search", opts...)
+func (c *rinhaDBClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (RinhaDB_SearchClient, error) {
+	stream, err := c.cc.NewStream(ctx, &RinhaDB_ServiceDesc.Streams[1], "/RinhaDB/Search", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &cacheSearchClient{stream}
+	x := &rinhaDBSearchClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -68,16 +90,16 @@ func (c *cacheClient) Search(ctx context.Context, in *SearchRequest, opts ...grp
 	return x, nil
 }
 
-type Cache_SearchClient interface {
+type RinhaDB_SearchClient interface {
 	Recv() (*SearchResponse, error)
 	grpc.ClientStream
 }
 
-type cacheSearchClient struct {
+type rinhaDBSearchClient struct {
 	grpc.ClientStream
 }
 
-func (x *cacheSearchClient) Recv() (*SearchResponse, error) {
+func (x *rinhaDBSearchClient) Recv() (*SearchResponse, error) {
 	m := new(SearchResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -85,119 +107,129 @@ func (x *cacheSearchClient) Recv() (*SearchResponse, error) {
 	return m, nil
 }
 
-// CacheServer is the server API for Cache service.
-// All implementations must embed UnimplementedCacheServer
+// RinhaDBServer is the server API for RinhaDB service.
+// All implementations must embed UnimplementedRinhaDBServer
 // for forward compatibility
-type CacheServer interface {
-	Put(context.Context, *PutRequest) (*PutResponse, error)
+type RinhaDBServer interface {
+	NewPerson(RinhaDB_NewPersonServer) error
 	Get(context.Context, *GetRequest) (*GetResponse, error)
-	Search(*SearchRequest, Cache_SearchServer) error
-	mustEmbedUnimplementedCacheServer()
+	Search(*SearchRequest, RinhaDB_SearchServer) error
+	mustEmbedUnimplementedRinhaDBServer()
 }
 
-// UnimplementedCacheServer must be embedded to have forward compatible implementations.
-type UnimplementedCacheServer struct {
+// UnimplementedRinhaDBServer must be embedded to have forward compatible implementations.
+type UnimplementedRinhaDBServer struct {
 }
 
-func (UnimplementedCacheServer) Put(context.Context, *PutRequest) (*PutResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Put not implemented")
+func (UnimplementedRinhaDBServer) NewPerson(RinhaDB_NewPersonServer) error {
+	return status.Errorf(codes.Unimplemented, "method NewPerson not implemented")
 }
-func (UnimplementedCacheServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+func (UnimplementedRinhaDBServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedCacheServer) Search(*SearchRequest, Cache_SearchServer) error {
+func (UnimplementedRinhaDBServer) Search(*SearchRequest, RinhaDB_SearchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Search not implemented")
 }
-func (UnimplementedCacheServer) mustEmbedUnimplementedCacheServer() {}
+func (UnimplementedRinhaDBServer) mustEmbedUnimplementedRinhaDBServer() {}
 
-// UnsafeCacheServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to CacheServer will
+// UnsafeRinhaDBServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to RinhaDBServer will
 // result in compilation errors.
-type UnsafeCacheServer interface {
-	mustEmbedUnimplementedCacheServer()
+type UnsafeRinhaDBServer interface {
+	mustEmbedUnimplementedRinhaDBServer()
 }
 
-func RegisterCacheServer(s grpc.ServiceRegistrar, srv CacheServer) {
-	s.RegisterService(&Cache_ServiceDesc, srv)
+func RegisterRinhaDBServer(s grpc.ServiceRegistrar, srv RinhaDBServer) {
+	s.RegisterService(&RinhaDB_ServiceDesc, srv)
 }
 
-func _Cache_Put_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutRequest)
-	if err := dec(in); err != nil {
+func _RinhaDB_NewPerson_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(RinhaDBServer).NewPerson(&rinhaDBNewPersonServer{stream})
+}
+
+type RinhaDB_NewPersonServer interface {
+	Send(*Pessoa) error
+	Recv() (*Pessoa, error)
+	grpc.ServerStream
+}
+
+type rinhaDBNewPersonServer struct {
+	grpc.ServerStream
+}
+
+func (x *rinhaDBNewPersonServer) Send(m *Pessoa) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *rinhaDBNewPersonServer) Recv() (*Pessoa, error) {
+	m := new(Pessoa)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(CacheServer).Put(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/Cache/Put",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CacheServer).Put(ctx, req.(*PutRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
-func _Cache_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _RinhaDB_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CacheServer).Get(ctx, in)
+		return srv.(RinhaDBServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Cache/Get",
+		FullMethod: "/RinhaDB/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CacheServer).Get(ctx, req.(*GetRequest))
+		return srv.(RinhaDBServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Cache_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _RinhaDB_Search_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(SearchRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(CacheServer).Search(m, &cacheSearchServer{stream})
+	return srv.(RinhaDBServer).Search(m, &rinhaDBSearchServer{stream})
 }
 
-type Cache_SearchServer interface {
+type RinhaDB_SearchServer interface {
 	Send(*SearchResponse) error
 	grpc.ServerStream
 }
 
-type cacheSearchServer struct {
+type rinhaDBSearchServer struct {
 	grpc.ServerStream
 }
 
-func (x *cacheSearchServer) Send(m *SearchResponse) error {
+func (x *rinhaDBSearchServer) Send(m *SearchResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-// Cache_ServiceDesc is the grpc.ServiceDesc for Cache service.
+// RinhaDB_ServiceDesc is the grpc.ServiceDesc for RinhaDB service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Cache_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Cache",
-	HandlerType: (*CacheServer)(nil),
+var RinhaDB_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "RinhaDB",
+	HandlerType: (*RinhaDBServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Put",
-			Handler:    _Cache_Put_Handler,
-		},
-		{
 			MethodName: "Get",
-			Handler:    _Cache_Get_Handler,
+			Handler:    _RinhaDB_Get_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
+			StreamName:    "NewPerson",
+			Handler:       _RinhaDB_NewPerson_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
 			StreamName:    "Search",
-			Handler:       _Cache_Search_Handler,
+			Handler:       _RinhaDB_Search_Handler,
 			ServerStreams: true,
 		},
 	},

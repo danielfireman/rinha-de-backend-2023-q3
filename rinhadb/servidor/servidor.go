@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
-	"sync"
 
 	"github.com/alphadose/haxmap"
 	pb "github.com/danielfireman/rinha-de-backend-2023-q3/rinhadb/proto"
@@ -20,14 +20,13 @@ const (
 )
 
 type server struct {
-	pb.UnimplementedCacheServer
+	pb.UnimplementedRinhaDBServer
 
-	apelidoMap    *haxmap.Map[string, struct{}] // mapa usado para detectar apelidos duplicados.
 	idMap         *haxmap.Map[string, string]   // mapa usado para o Get.
 	indice        *haxmap.Map[string, []string] // indice invertido, usado para o Search.
-	muCriacao     sync.Mutex                    // Lock para tornar atômica a checagem de duplicatas e adição de novas pessoas.
 	chanIndexacao chan *pb.Pessoa               // Canal para indexação de pessoas de forma assíncrona.
 	uuidGen       *fastuuid.Generator
+	clientStreams map[string]pb.RinhaDB_NewPersonServer
 
 	// [PerfNote] Como temos apenas uma thread, não queremos que as diversas goroutines (uma por
 	// requisição) fiquem disputando a CPU. Por isso, usamos um semáforo para garantir que apenas uma
@@ -37,9 +36,9 @@ type server struct {
 
 func newServer() *server {
 	s := &server{
-		apelidoMap:    haxmap.New[string, struct{}](initialSizeMapPessoas),
 		idMap:         haxmap.New[string, string](initialSizeMapPessoas),
 		indice:        haxmap.New[string, []string](initialSizeMapItems),
+		clientStreams: make(map[string]pb.RinhaDB_NewPersonServer),
 		chanIndexacao: make(chan *pb.Pessoa),
 		sem:           semaphore.NewWeighted(concurrencyLevel),
 		uuidGen:       fastuuid.MustNewGenerator(),
@@ -53,41 +52,43 @@ func newServer() *server {
 	return s
 }
 
-func (s *server) Put(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
-	s.sem.Acquire(ctx, 1)
-	defer s.sem.Release(1)
-
-	// [ConcurrencyNote] Checar duplicata e criar uma nova entrada precisa ser executado de forma atômica.
-	s.muCriacao.Lock()
-	// verifica apelidos duplicados.
-	_, ok := s.apelidoMap.Get(in.Pessoa.Apelido)
-	if ok {
-		s.muCriacao.Unlock()
-		return &pb.PutResponse{
-			Status: pb.Status_DUPLICATE_KEY,
-		}, nil
+func (s *server) NewPerson(stream pb.RinhaDB_NewPersonServer) error {
+	var sID pb.StreamID
+	if err := stream.RecvMsg(&sID); err != nil { // ignorando mensagem inicial
+		return fmt.Errorf("err ao receber primeira mensagem no stream: %w", err)
 	}
-	// preenchendo mapa de pessoas, o que vai fazer o get e a checagem de duplicatas funcionarem
-	// logo após o put.
-	pessoa := in.Pessoa
-	pessoa.Id = s.uuidGen.Hex128() // it is okay to call it concurrently (as per Next()).
+	id := sID.Id
+	s.clientStreams[id] = stream
+	for {
+		pessoa, err := stream.Recv()
+		if err == io.EOF {
+			return fmt.Errorf("o fluxo de novas pessoas não deve ser fechado")
+		}
+		if err != nil {
+			return fmt.Errorf("erro ao receber mensagem do stream de novas pessoas: %w", err)
+		}
 
-	// atualiza bancos de dados com valor pré-processado (pronto para ser retornado).
-	pStr := pessoa2Str(pessoa)
-	s.apelidoMap.Set(pessoa.Apelido, struct{}{})
-	s.idMap.Set(pessoa.Id, pStr)
-	s.muCriacao.Unlock()
+		// atualiza bancos de dados com valor pré-processado (pronto para ser retornado).
+		s.idMap.Set(pessoa.Id, pessoa2Str(pessoa))
 
-	// dispara a indexação de forma assíncrona.
-	go func() {
-		s.chanIndexacao <- pessoa
-	}()
+		// enviando a atualização para as demais instâncias.
+		for k, stream := range s.clientStreams {
+			if k != id {
+				if err := stream.Send(pessoa); err != nil {
+					return fmt.Errorf("erro ao enviar pessoa no stream de novas pessoas: %w", err)
+				}
+			}
+		}
 
-	return &pb.PutResponse{
-		Id:     pessoa.Id,
-		Pessoa: pStr,
-		Status: pb.Status_OK,
-	}, nil
+		if err := stream.Send(pessoa); err != nil {
+			return fmt.Errorf("erro ao confirmar envio de pessoa: %w", err)
+		}
+
+		// dispara a indexação de forma assíncrona.
+		go func() {
+			s.chanIndexacao <- pessoa
+		}()
+	}
 }
 
 func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, error) {
@@ -106,7 +107,7 @@ func (s *server) Get(ctx context.Context, in *pb.GetRequest) (*pb.GetResponse, e
 	}, nil
 }
 
-func (s *server) Search(req *pb.SearchRequest, stream pb.Cache_SearchServer) error { //Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
+func (s *server) Search(req *pb.SearchRequest, stream pb.RinhaDB_SearchServer) error { //Search(ctx context.Context, in *pb.SearchRequest) (*pb.SearchResponse, error) {
 	s.sem.Acquire(context.TODO(), 1)
 	defer s.sem.Release(1)
 

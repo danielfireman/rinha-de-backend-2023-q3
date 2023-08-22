@@ -1,21 +1,11 @@
 syntax = "proto3";
+
 option go_package = "./proto";
 
-service Cache {
-    rpc Put (PutRequest) returns (PutResponse) {}
+service RinhaDB {
+    rpc NewPerson (stream Pessoa) returns (stream Pessoa) {}
     rpc Get (GetRequest) returns (GetResponse) {}
     rpc Search(SearchRequest) returns (stream SearchResponse) {}
-  }
-
-  message PutRequest {
-    Pessoa pessoa = 1;
-  }
-  
-  message PutResponse {
-    string pessoa = 1;
-    string id = 2;
-    Status status = 3;
-    string msg = 4;
   }
 
   message GetRequest {
@@ -50,4 +40,12 @@ service Cache {
     string apelido = 3;
     string nascimento = 4;
     repeated string stack = 5;
+  }
+
+  message StreamID {
+    string id = 1;
+  }
+
+  message NovaPessoaProcessada {
+    string id = 1;
   }
